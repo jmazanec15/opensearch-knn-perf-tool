@@ -1,6 +1,7 @@
 """Provides functions for writing to file.
 
-write_json(): Writes a python dictionary to a JSON file
+Functions:
+    write_json(): Writes a python dictionary to a JSON file
 """
 
 import json

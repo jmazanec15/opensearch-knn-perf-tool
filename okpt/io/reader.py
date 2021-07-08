@@ -3,7 +3,8 @@
 Defines the subcommands `test`, `plot`, and `compare` and the corresponding
 files that are required by each command.
 
-get_args(): returns a dictionary of the command line args
+Functions:
+    get_args(): returns a dictionary of the command line args
 """
 
 import argparse
@@ -15,7 +16,9 @@ parser = argparse.ArgumentParser(
 
 
 def define_args():
-    subparsers = parser.add_subparsers(help='sub-command help')
+    subparsers = parser.add_subparsers(title='commands',
+                                       dest='command',
+                                       help='sub-command help')
 
     # add subcommands
     parser_test = subparsers.add_parser('test')
@@ -37,6 +40,7 @@ def define_args():
     parser_plot.add_argument('config_path',
                              type=readable_file_type,
                              help='Path of configuration file.')
+    # TODO: add custom nargs for 2 or more args instead of 1
     parser_plot.add_argument('results_paths',
                              type=readable_file_type,
                              nargs='+',
@@ -49,6 +53,7 @@ def define_args():
     parser_compare.add_argument('output_path',
                                 type=writable_file_type,
                                 help='Path of output file.')
+    # TODO: add custom nargs for 2 or more args instead of 1
     parser_compare.add_argument('results_paths',
                                 type=readable_file_type,
                                 nargs='+',
