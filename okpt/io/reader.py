@@ -14,6 +14,25 @@ parser = argparse.ArgumentParser(
     'Run performance tests against the OpenSearch plugin and various ANN libaries.'
 )
 
+readable_file_type = argparse.FileType('r')
+writable_file_type = argparse.FileType('w')
+
+
+def add_config_path_arg(parser, name, help_msg="Path of configuration file."):
+    parser.add_argument(name, type=readable_file_type, help=help_msg)
+
+
+def add_output_path_arg(parser, name, help_msg="Path of output file."):
+    parser.add_argument(name, type=writable_file_type)
+
+
+# TODO: add custom nargs for 2 or more args instead of 1
+def add_results_paths_arg(parser, name, help_msg="Paths of results files."):
+    parser.add_argument(name,
+                        type=writable_file_type,
+                        nargs='+',
+                        help=help_msg)
+
 
 def define_args():
     subparsers = parser.add_subparsers(title='commands',
@@ -25,39 +44,18 @@ def define_args():
     parser_plot = subparsers.add_parser('plot')
     parser_compare = subparsers.add_parser('compare')
 
-    readable_file_type = argparse.FileType('r')
-    writable_file_type = argparse.FileType('w')
-
     # test subcommand
-    parser_test.add_argument('config_path',
-                             type=readable_file_type,
-                             help='Path of configuration file.')
-    parser_test.add_argument('output_path',
-                             type=writable_file_type,
-                             help='Path of output file.')
+    add_config_path_arg(parser_test, 'config_path')
+    add_output_path_arg(parser_test, 'output_path')
 
     # plot subcommand
-    parser_plot.add_argument('config_path',
-                             type=readable_file_type,
-                             help='Path of configuration file.')
-    # TODO: add custom nargs for 2 or more args instead of 1
-    parser_plot.add_argument('results_paths',
-                             type=readable_file_type,
-                             nargs='+',
-                             help='Paths of result files.')
+    add_config_path_arg(parser_plot, 'config_path')
+    add_results_paths_arg(parser_plot, 'results_paths')
 
     # compare subcommand
-    parser_compare.add_argument('config_path',
-                                type=readable_file_type,
-                                help='Path of configuration file.')
-    parser_compare.add_argument('output_path',
-                                type=writable_file_type,
-                                help='Path of output file.')
-    # TODO: add custom nargs for 2 or more args instead of 1
-    parser_compare.add_argument('results_paths',
-                                type=readable_file_type,
-                                nargs='+',
-                                help='Paths of result files.')
+    add_config_path_arg(parser_compare, 'config_path')
+    add_output_path_arg(parser_compare, 'output_path')
+    add_results_paths_arg(parser_compare, 'results_paths')
 
 
 def get_args():
