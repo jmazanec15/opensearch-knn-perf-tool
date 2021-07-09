@@ -1,0 +1,23 @@
+# defined using the cerberus validation API
+# https://docs.python-cerberus.org/en/stable/index.html
+
+test_name:
+  type: string
+test_type:
+  type: string
+  allowed: [index, query]
+knn_service:
+  type: string
+  allowed: [opensearch, nmslib]
+service_config:
+  type: string
+dataset_path:
+  type: string
+dataset_format:
+  type: string
+  allowed: [hdf5]
+test_parameters:
+  type: dict
+  schema:
+    num_runs:
+      type: int
