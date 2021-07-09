@@ -8,9 +8,15 @@ Functions:
 """
 
 import argparse
+from io import TextIOWrapper
+import typing
 
 readable_file_type = argparse.FileType('r')
 writable_file_type = argparse.FileType('w')
+
+
+def get_read_file(path: str) -> TextIOWrapper:
+    return open(path, 'r')
 
 
 def add_config_path_arg(parser, name, help_msg="Path of configuration file."):
@@ -55,6 +61,8 @@ parser = argparse.ArgumentParser(
     description=
     'Run performance tests against the OpenSearch plugin and various ANN libaries.'
 )
+
+
 def define_args():
     subparsers = parser.add_subparsers(title='commands',
                                        dest='command',
