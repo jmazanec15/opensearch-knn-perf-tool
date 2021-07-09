@@ -7,6 +7,10 @@ Functions:
 import json
 
 
+def get_write_file(path: str) -> TextIOWrapper:
+    return open(path, 'w')
+
+
 def write_json(data, file):
     """Writes a dictionary to a JSON file.
 
