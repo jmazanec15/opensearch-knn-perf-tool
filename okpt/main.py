@@ -1,7 +1,13 @@
 """ Runner script that serves as the main controller of the testing tool.
 """
 
-from okpt.io import reader, writer, parser
+import sys
+
+import cerberus
+
+from okpt.io import reader, writer
+from okpt.io.config import validator
+
 
 def main():
     reader.define_args()
@@ -10,15 +16,18 @@ def main():
     if args['command'] == 'test':
         data = {'a': 1, 'b': 2, 'c': 3}
         file = args['output_path']
-        config = parser.parse_yaml(args['config_path'])
-        service_config_file = open(config['service_config'], 'r')
-        service_config = parser.parse_json(service_config_file)
+        tool_config_file = args['config_path']
+        try:
+            are_configs_valid = validator.validate(tool_config_file)
+        except Exception as e:
+            print(e.args)
+            sys.exit(1)
 
-        # print(config)
-        # print(service_config)
+        if (are_configs_valid):
+            print('configs are valid!')
 
         writer.write_json(data, file)
     elif args['command'] == 'plot':
-        pass # TODO
+        pass  # TODO
     elif args['command'] == 'compare':
-        pass # TODO
+        pass  # TODO
