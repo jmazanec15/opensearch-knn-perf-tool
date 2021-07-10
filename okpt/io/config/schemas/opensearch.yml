@@ -4,8 +4,14 @@
 index_settings:
   type: string
 max_num_segments:
-  type: int
+  type: integer
+  min: 1
+  max: 10
 index_thread:
-  type: int
+  type: integer
+  min: 1
+  max: 10
 query_thread:
-  type: int
+  type: integer
+  min: 1
+  max: 10

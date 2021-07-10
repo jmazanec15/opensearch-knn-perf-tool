@@ -20,4 +20,6 @@ test_parameters:
   type: dict
   schema:
     num_runs:
-      type: int
+      type: integer
+      min: 1
+      max: 10

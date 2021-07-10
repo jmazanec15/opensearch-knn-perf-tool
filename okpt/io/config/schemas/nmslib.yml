@@ -8,3 +8,4 @@ method:
       type: string
     space_type:
       type: string
+      allowed: [l2, cosine]
