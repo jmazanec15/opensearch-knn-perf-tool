@@ -4,6 +4,7 @@ Functions:
     write_json(): Writes a python dictionary to a JSON file
 """
 
+from io import TextIOWrapper
 import json
 
 
