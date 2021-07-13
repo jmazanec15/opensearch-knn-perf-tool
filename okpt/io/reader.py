@@ -4,76 +4,78 @@ Defines the subcommands `test`, `plot`, and `compare` and the corresponding
 files that are required by each command.
 
 Functions:
-    get_args(): returns a dictionary of the command line args
+    get_read_file_obj(): Get a readable file object.
+    define_args(): Define the command line arguments.
+    get_args(): Returns a dictionary of the command line args.
 """
 
 import argparse
 from io import TextIOWrapper
-import typing
 
-readable_file_type = argparse.FileType('r')
-writable_file_type = argparse.FileType('w')
+_readable_file_type = argparse.FileType('r')
+_writable_file_type = argparse.FileType('w')
 
 
 def get_read_file_obj(path: str) -> TextIOWrapper:
+    """Given a file path, get a readable file object."""
     return open(path, 'r')
 
 
-def add_config_path_arg(parser, name, help_msg="Path of configuration file."):
+def _add_config_path_arg(parser, name, help_msg="Path of configuration file."):
     """"Add configuration file path argument."""
-    parser.add_argument(name, type=readable_file_type, help=help_msg)
+    parser.add_argument(name, type=_readable_file_type, help=help_msg)
 
 
-def add_output_path_arg(parser, name, help_msg="Path of output file."):
+def _add_output_path_arg(parser, name, help_msg="Path of output file."):
     """"Add output file path argument."""
-    parser.add_argument(name, type=writable_file_type, help=help_msg)
+    parser.add_argument(name, type=_writable_file_type, help=help_msg)
 
 
 # TODO: add custom nargs for 2 or more args instead of 1
-def add_results_paths_arg(parser, name, help_msg="Paths of results files."):
+def _add_results_paths_arg(parser, name, help_msg="Paths of results files."):
     """"Add results files paths argument."""
     parser.add_argument(name,
-                        type=writable_file_type,
+                        type=_writable_file_type,
                         nargs='+',
                         help=help_msg)
 
 
-def add_test_subcommand(subparsers):
+def _add_test_subcommand(subparsers):
     parser_test = subparsers.add_parser('test')
-    add_config_path_arg(parser_test, 'config_path')
-    add_output_path_arg(parser_test, 'output_path')
+    _add_config_path_arg(parser_test, 'config_path')
+    _add_output_path_arg(parser_test, 'output_path')
 
 
-def add_plot_subcommand(subparsers):
+def _add_plot_subcommand(subparsers):
     parser_plot = subparsers.add_parser('plot')
-    add_config_path_arg(parser_plot, 'config_path')
-    add_results_paths_arg(parser_plot, 'results_paths')
+    _add_config_path_arg(parser_plot, 'config_path')
+    _add_results_paths_arg(parser_plot, 'results_paths')
 
 
-def add_compare_subcommand(subparsers):
+def _add_compare_subcommand(subparsers):
     parser_compare = subparsers.add_parser('compare')
-    add_config_path_arg(parser_compare, 'config_path')
-    add_output_path_arg(parser_compare, 'output_path')
-    add_results_paths_arg(parser_compare, 'results_paths')
+    _add_config_path_arg(parser_compare, 'config_path')
+    _add_output_path_arg(parser_compare, 'output_path')
+    _add_results_paths_arg(parser_compare, 'results_paths')
 
 
-parser = argparse.ArgumentParser(
+_parser = argparse.ArgumentParser(
     description=
     'Run performance tests against the OpenSearch plugin and various ANN libaries.'
 )
 
 
 def define_args():
-    subparsers = parser.add_subparsers(title='commands',
-                                       dest='command',
-                                       help='sub-command help')
+    subparsers = _parser.add_subparsers(title='commands',
+                                        dest='command',
+                                        help='sub-command help')
 
     # add subcommands
-    add_test_subcommand(subparsers)
-    add_plot_subcommand(subparsers)
-    add_compare_subcommand(subparsers)
+    _add_test_subcommand(subparsers)
+    _add_plot_subcommand(subparsers)
+    _add_compare_subcommand(subparsers)
 
 
 def get_args():
-    args = parser.parse_args()
+    args = _parser.parse_args()
     return vars(args)

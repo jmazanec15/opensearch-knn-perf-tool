@@ -3,13 +3,12 @@
 
 import sys
 
-import cerberus
-
 from okpt.io import reader, writer
 from okpt.io.config import validator
 
 
 def main():
+    """Main function of entry module."""
     reader.define_args()
     args = reader.get_args()
 

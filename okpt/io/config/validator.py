@@ -1,15 +1,15 @@
 """Provides validation for various config files.
 
+Functions:
+    validate(): Validate the tool configuration.
+
 Exceptions:
     ConfigurationError: An error in the tool configuration.
 
-Functions:
-    validate(): Validate the tool configuration.
 """
 
-from io import TextIOWrapper
-from enum import Enum
 import os
+from io import TextIOWrapper
 from typing import Any, Dict
 
 import cerberus
@@ -32,7 +32,7 @@ class ConfigurationError(Exception):
         self.message = message
 
 
-class Validator():
+class _Validator():
     """Validator for various configuration schemas.
 
     Attributes:
@@ -41,6 +41,7 @@ class Validator():
     """
     def __init__(self, schema_name: str):
         self.validator = self._get_validator_from_schema_name(schema_name)
+        self.errors = ''
 
     def _get_validator_from_schema_name(self, schema_name: str):
         """Get the corresponding Cerberus validator from a schema name."""
@@ -51,11 +52,10 @@ class Validator():
 
     def validate(self, config_obj: Dict[str, Any]):
         """Validate the configuration obj against the class schema."""
-        if self.validator.validate(config_obj):
-            return True
-        else:
+        if not self.validator.validate(config_obj):
             self.errors = self.validator.errors
             return False
+        return True
 
 
 def validate(tool_config_file_obj: TextIOWrapper):
@@ -72,7 +72,7 @@ def validate(tool_config_file_obj: TextIOWrapper):
     """
 
     # validate tool config
-    tool_config_validator = Validator(_TOOL)
+    tool_config_validator = _Validator(_TOOL)
     tool_config_obj = parser.parse_yaml(tool_config_file_obj)
     is_tool_config_valid = tool_config_validator.validate(tool_config_obj)
 
@@ -80,7 +80,7 @@ def validate(tool_config_file_obj: TextIOWrapper):
 
         # validate service config
         knn_service = tool_config_obj['knn_service']
-        service_config_validator = Validator(knn_service)
+        service_config_validator = _Validator(knn_service)
         service_config_file_path = tool_config_obj['service_config']
         service_config_obj = parser.parse_yaml_from_path(
             service_config_file_path)
@@ -96,9 +96,6 @@ def validate(tool_config_file_obj: TextIOWrapper):
                 return [
                     tool_config_obj, service_config_obj, index_settings_obj
                 ]
-            else:
-                return [tool_config_obj, service_config_obj]
-        else:
-            raise ConfigurationError(service_config_validator.errors)
-    else:
-        raise ConfigurationError(tool_config_validator.errors)
+            return [tool_config_obj, service_config_obj]
+        raise ConfigurationError(service_config_validator.errors)
+    raise ConfigurationError(tool_config_validator.errors)
