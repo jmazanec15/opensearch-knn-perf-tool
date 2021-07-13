@@ -14,19 +14,19 @@ def main():
     args = reader.get_args()
 
     if args['command'] == 'test':
-        data = {'a': 1, 'b': 2, 'c': 3}
-        file = args['output_path']
-        tool_config_file = args['config_path']
+        tool_config_file_obj = args['config_path']
         try:
-            are_configs_valid = validator.validate(tool_config_file)
-        except Exception as e:
+            tool_config, service_config, index_settings = validator.validate(
+                tool_config_file_obj)
+            print('configs are valid!')
+        except validator.ConfigurationError as e:
             print(e.args)
             sys.exit(1)
 
-        if (are_configs_valid):
-            print('configs are valid!')
-
-        writer.write_json(data, file)
+        data = {'a': 1, 'b': 2, 'c': 3}
+        output_file_path = args['output_path']
+        writer.write_json(data, output_file_path)
+        print(f'data written to `{output_file_path.name}`')
     elif args['command'] == 'plot':
         pass  # TODO
     elif args['command'] == 'compare':

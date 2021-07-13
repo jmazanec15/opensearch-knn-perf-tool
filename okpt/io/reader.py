@@ -15,7 +15,7 @@ readable_file_type = argparse.FileType('r')
 writable_file_type = argparse.FileType('w')
 
 
-def get_read_file(path: str) -> TextIOWrapper:
+def get_read_file_obj(path: str) -> TextIOWrapper:
     return open(path, 'r')
 
 
