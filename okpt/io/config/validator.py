@@ -97,5 +97,7 @@ def validate(tool_config_file_obj: TextIOWrapper):
                     tool_config_obj, service_config_obj, index_settings_obj
                 ]
             return [tool_config_obj, service_config_obj]
-        raise ConfigurationError(service_config_validator.errors)
-    raise ConfigurationError(tool_config_validator.errors)
+        raise ConfigurationError(
+            f'Service Config Error: {service_config_validator.errors}')
+    raise ConfigurationError(
+        f'Tool Config Error: {tool_config_validator.errors}')
