@@ -96,14 +96,12 @@ def validate(tool_config_file_obj: TextIOWrapper):
             service_config_obj)
 
         if is_service_config_valid:
-            # check if index settings need to be parsed (for opensearch only)
+            # check if index spec needs to be parsed (for opensearch only)
             if knn_service == _OPENSEARCH:
-                index_settings_file_path = service_config_obj['index_settings']
-                index_settings_obj = parser.parse_json_from_path(
-                    index_settings_file_path)
-                return [
-                    tool_config_obj, service_config_obj, index_settings_obj
-                ]
+                index_spec_file_path = service_config_obj['index_spec']
+                index_spec_obj = parser.parse_json_from_path(
+                    index_spec_file_path)
+                return [tool_config_obj, service_config_obj, index_spec_obj]
             return [tool_config_obj, service_config_obj]
         raise ConfigurationError(
             f'Service Config Error: {service_config_validator.errors}')

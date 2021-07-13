@@ -23,7 +23,7 @@ def main():
     if args['command'] == 'test':
         tool_config_file_obj = args['config_path']
         try:
-            tool_config, service_config, index_settings = validator.validate(
+            tool_config, service_config, index_spec = validator.validate(
                 tool_config_file_obj)
             print('configs are valid!')
         except validator.ConfigurationError as e:

@@ -1,7 +1,7 @@
 # defined using the cerberus validation API
 # https://docs.python-cerberus.org/en/stable/index.html
 
-index_settings:
+index_spec:
   type: string
 max_num_segments:
   type: integer
