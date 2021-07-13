@@ -37,17 +37,15 @@ class _Validator():
         validator: Cerberus validator for a particular schema
         errors: Cerberus validation errors (if any are found during validation)
     """
-    _CURR_FILE_DIR = os.path.dirname(os.path.abspath(__file__))
-    _SCHEMAS_DIR = os.path.join(_CURR_FILE_DIR, 'schemas')
-
     def __init__(self, schema_name: str):
         self.validator = self._get_validator_from_schema_name(schema_name)
         self.errors = ''
 
     def _get_validator_from_schema_name(self, schema_name: str):
         """Get the corresponding Cerberus validator from a schema name."""
-        schema_file_path = os.path.join(self._SCHEMAS_DIR,
-                                        f'{schema_name}.yml')
+        curr_file_dir = os.path.dirname(os.path.abspath(__file__))
+        schemas_dir = os.path.join(curr_file_dir, 'schemas')
+        schema_file_path = os.path.join(schemas_dir, f'{schema_name}.yml')
         schema_file_obj = reader.get_read_file_obj(schema_file_path)
         schema_obj = parser.parse_yaml(schema_file_obj)
         return cerberus.Validator(schema_obj)
