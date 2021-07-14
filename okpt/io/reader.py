@@ -74,6 +74,7 @@ _parser = argparse.ArgumentParser(
 
 
 def define_args():
+    """Define tool commands."""
     subparsers = _parser.add_subparsers(title='commands',
                                         dest='command',
                                         help='sub-command help')
@@ -85,5 +86,10 @@ def define_args():
 
 
 def get_args():
+    """Parses and returns the command line args.
+
+    Returns:
+        A dict containing the command line args.
+    """
     args = _parser.parse_args()
     return vars(args)

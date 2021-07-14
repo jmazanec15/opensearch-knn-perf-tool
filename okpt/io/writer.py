@@ -18,10 +18,22 @@ from io import TextIOWrapper
 
 
 def get_write_file(path: str) -> TextIOWrapper:
-    """Given a file path, get a readable file object."""
+    """Get a writeable file object from a file path.
+
+    Args:
+        file path
+
+    Returns:
+        Writeable file object
+    """
     return open(path, 'w')
 
 
 def write_json(data, file):
-    """Writes a dictionary to a JSON file."""
+    """Writes a dictionary to a JSON file.
+
+    Args:
+        data: A dict to write to JSON.
+        file: Path of output file.
+    """
     json.dump(data, file)
