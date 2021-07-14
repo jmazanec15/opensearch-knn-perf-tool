@@ -21,8 +21,8 @@ def main():
     reader.define_args()
     args = reader.get_args()
 
-    if args['command'] == 'test':
-        tool_config_file_obj = args['config_path']
+    if args.command == 'test':
+        tool_config_file_obj = args.config_path
         try:
             tool_config, service_config, index_spec = validator.validate(
                 tool_config_file_obj)
@@ -33,10 +33,10 @@ def main():
 
         # TODO: replace data with test results output
         data = {'a': 1, 'b': 2, 'c': 3}
-        output_file_path = args['output_path']
+        output_file_path = args.output_path
         writer.write_json(data, output_file_path)
         logging.debug(f'data written to `{output_file_path.name}`')
-    elif args['command'] == 'plot':
+    elif args.command == 'plot':
         pass  # TODO
-    elif args['command'] == 'compare':
+    elif args.command == 'compare':
         pass  # TODO

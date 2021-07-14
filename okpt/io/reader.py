@@ -18,8 +18,9 @@ Functions:
 """
 
 import argparse
+from collections import namedtuple
 from io import TextIOWrapper
-from typing import Dict, Any
+from typing import Type
 
 _readable_file_type = argparse.FileType('r')
 _writable_file_type = argparse.FileType('w')
@@ -87,11 +88,13 @@ def define_args():
     _add_compare_subcommand(subparsers)
 
 
-def get_args() -> Dict[str, Any]:
+_args = namedtuple('args', 'command config_path output_path')
+def get_args() -> Type[_args]:
     """Parses and returns the command line args.
 
     Returns:
         A dict containing the command line args.
     """
     args = _parser.parse_args()
-    return vars(args)
+    args_dict = vars(args)
+    return _args(args_dict['command'], args_dict['config_path'], args_dict['output_path'])
