@@ -79,6 +79,7 @@ def define_args():
     subparsers = _parser.add_subparsers(title='commands',
                                         dest='command',
                                         help='sub-command help')
+    subparsers.required = True
 
     # add subcommands
     _add_test_subcommand(subparsers)
