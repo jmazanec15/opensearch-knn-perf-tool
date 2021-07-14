@@ -10,6 +10,7 @@
 """
 
 import sys
+import logging
 
 from okpt.io import reader, writer
 from okpt.io.config import validator
@@ -25,16 +26,16 @@ def main():
         try:
             tool_config, service_config, index_spec = validator.validate(
                 tool_config_file_obj)
-            print('configs are valid!')
+            logging.debug('configs are valid!')
         except validator.ConfigurationError as e:
-            print(e.args)
+            logging.error(e.args)
             sys.exit(1)
 
         # TODO: replace data with test results output
         data = {'a': 1, 'b': 2, 'c': 3}
         output_file_path = args['output_path']
         writer.write_json(data, output_file_path)
-        print(f'data written to `{output_file_path.name}`')
+        logging.debug(f'data written to `{output_file_path.name}`')
     elif args['command'] == 'plot':
         pass  # TODO
     elif args['command'] == 'compare':
