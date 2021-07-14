@@ -29,7 +29,7 @@ def parse_yaml(file: TextIOWrapper) -> Dict[str, Any]:
     return yaml.load(file, Loader=yaml.SafeLoader)
 
 
-def parse_yaml_from_path(path: str):
+def parse_yaml_from_path(path: str) -> Dict[str, Any]:
     """Parses YAML file from file path.
 
     Args:
@@ -54,7 +54,7 @@ def parse_json(file: TextIOWrapper) -> Dict[str, Any]:
     return json.load(file)
 
 
-def parse_json_from_path(path: str):
+def parse_json_from_path(path: str) -> Dict[str, Any]:
     """Parses JSON file from file path.
 
     Args:

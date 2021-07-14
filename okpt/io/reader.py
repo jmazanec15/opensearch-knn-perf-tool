@@ -19,6 +19,7 @@ Functions:
 
 import argparse
 from io import TextIOWrapper
+from typing import Dict, Any
 
 _readable_file_type = argparse.FileType('r')
 _writable_file_type = argparse.FileType('w')
@@ -85,7 +86,7 @@ def define_args():
     _add_compare_subcommand(subparsers)
 
 
-def get_args():
+def get_args() -> Dict[str, Any]:
     """Parses and returns the command line args.
 
     Returns:

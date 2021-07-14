@@ -66,7 +66,7 @@ class _Validator():
         return True
 
 
-def validate(tool_config_file_obj: TextIOWrapper):
+def validate(tool_config_file_obj: TextIOWrapper) -> bool:
     """Validate the configurations of the tool.
 
     Args:
