@@ -30,6 +30,7 @@ def main():
             print(e.args)
             sys.exit(1)
 
+        # TODO: replace data with test results output
         data = {'a': 1, 'b': 2, 'c': 3}
         output_file_path = args['output_path']
         writer.write_json(data, output_file_path)
