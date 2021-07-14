@@ -84,26 +84,27 @@ def validate(tool_config_file_obj: TextIOWrapper) -> List[Any]:
     tool_config_obj = parser.parse_yaml(tool_config_file_obj)
     is_tool_config_valid = tool_config_validator.validate(tool_config_obj)
 
-    if is_tool_config_valid:
+    if not is_tool_config_valid:
+        raise ConfigurationError(
+            f'Tool Config Error: {tool_config_validator.errors}')
 
-        # validate service config
-        knn_service = tool_config_obj['knn_service']
-        service_config_validator = _Validator(knn_service)
-        service_config_file_path = tool_config_obj['service_config']
-        service_config_obj = parser.parse_yaml_from_path(
-            service_config_file_path)
-        is_service_config_valid = service_config_validator.validate(
-            service_config_obj)
+    # validate service config
+    knn_service = tool_config_obj['knn_service']
+    service_config_validator = _Validator(knn_service)
+    service_config_file_path = tool_config_obj['service_config']
+    service_config_obj = parser.parse_yaml_from_path(
+        service_config_file_path)
+    is_service_config_valid = service_config_validator.validate(
+        service_config_obj)
 
-        if is_service_config_valid:
-            # check if index spec needs to be parsed (for opensearch only)
-            if knn_service == _OPENSEARCH:
-                index_spec_file_path = service_config_obj['index_spec']
-                index_spec_obj = parser.parse_json_from_path(
-                    index_spec_file_path)
-                return [tool_config_obj, service_config_obj, index_spec_obj]
-            return [tool_config_obj, service_config_obj]
+    if not is_service_config_valid:
         raise ConfigurationError(
             f'Service Config Error: {service_config_validator.errors}')
-    raise ConfigurationError(
-        f'Tool Config Error: {tool_config_validator.errors}')
+
+    # check if index spec needs to be parsed (for opensearch only)
+    if knn_service == _OPENSEARCH:
+        index_spec_file_path = service_config_obj['index_spec']
+        index_spec_obj = parser.parse_json_from_path(
+            index_spec_file_path)
+        return [tool_config_obj, service_config_obj, index_spec_obj]
+    return [tool_config_obj, service_config_obj]
