@@ -18,7 +18,7 @@ Exceptions:
 
 import os
 from io import TextIOWrapper
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import cerberus
 
@@ -66,7 +66,7 @@ class _Validator():
         return True
 
 
-def validate(tool_config_file_obj: TextIOWrapper) -> bool:
+def validate(tool_config_file_obj: TextIOWrapper) -> List[Any]:
     """Validate the configurations of the tool.
 
     Args:
