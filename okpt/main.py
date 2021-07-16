@@ -17,11 +17,11 @@
 """ Runner script that serves as the main controller of the testing tool.
 """
 
-import sys
 import logging
+import sys
 
-from okpt.io import reader, writer
-from okpt.io.config import validator
+from okpt.io.config import parser
+from okpt.io.utils import reader, writer
 
 
 def main():
@@ -32,10 +32,10 @@ def main():
     if args.command == 'test':
         tool_config_file_obj = args.config_path
         try:
-            tool_config, service_config, index_spec = validator.validate(
+            tool_config, service_config, index_spec = parser.validate(
                 tool_config_file_obj)
             logging.debug('configs are valid!')
-        except validator.ConfigurationError as e:
+        except parser.ConfigurationError as e:
             logging.error(e.args)
             sys.exit(1)
 
@@ -43,7 +43,7 @@ def main():
         data = {'a': 1, 'b': 2, 'c': 3}
         output_file_path = args.output_path
         writer.write_json(data, output_file_path)
-        logging.debug(f'data written to `{output_file_path.name}`')
+        logging.debug('data written to `%s`', output_file_path.name)
     elif args.command == 'plot':
         pass  # TODO
     elif args.command == 'compare':

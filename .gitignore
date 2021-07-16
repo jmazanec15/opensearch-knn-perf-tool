@@ -17,3 +17,6 @@ venv/
 
 # pytype static type analyzer
 .pytype/
+
+# pylint
+.pylintrc
