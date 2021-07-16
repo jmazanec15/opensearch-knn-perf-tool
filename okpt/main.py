@@ -35,8 +35,8 @@ def main():
             tool_config, service_config, index_spec = parser.validate(
                 tool_config_file_obj)
             logging.debug('configs are valid!')
-        except parser.ConfigurationError as e:
-            logging.error(e.args)
+        except parser.ConfigurationError as inst:
+            logging.error(inst.args)
             sys.exit(1)
 
         # TODO: replace data with test results output

@@ -36,7 +36,8 @@ _writable_file_type = argparse.FileType('w')
 
 def get_read_file_obj(path: str) -> TextIOWrapper:
     """Given a file path, get a readable file object."""
-    return open(path, 'r')
+    with open(path, 'r') as file_obj:
+        return file_obj
 
 
 def _add_config_path_arg(parser, name, help_msg="Path of configuration file."):
@@ -96,8 +97,8 @@ def define_args():
     _add_compare_subcommand(subparsers)
 
 
-_args = namedtuple('args', 'command config_path output_path')
-def get_args() -> Type[_args]:
+_ToolArgs = namedtuple('args', 'command config_path output_path')
+def get_args() -> _ToolArgs:
     """Parses and returns the command line args.
 
     Returns:
@@ -105,4 +106,4 @@ def get_args() -> Type[_args]:
     """
     args = _parser.parse_args()
     args_dict = vars(args)
-    return _args(args_dict['command'], args_dict['config_path'], args_dict['output_path'])
+    return _ToolArgs(args_dict['command'], args_dict['config_path'], args_dict['output_path'])

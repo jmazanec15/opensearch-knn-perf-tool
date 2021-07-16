@@ -34,7 +34,8 @@ def get_write_file(path: str) -> TextIOWrapper:
     Returns:
         Writeable file object
     """
-    return open(path, 'w')
+    with open(path, 'w') as file_obj:
+        return file_obj
 
 
 def write_json(data, file):
