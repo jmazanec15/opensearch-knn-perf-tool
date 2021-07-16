@@ -46,7 +46,7 @@ def parse_yaml_from_path(path: str) -> Dict[str, Any]:
     Returns:
         A dict representing the YAML file.
     """
-    file = reader.get_read_file_obj(path)
+    file = reader.get_file_obj(path)
     return parse_yaml(file)
 
 
@@ -71,5 +71,5 @@ def parse_json_from_path(path: str) -> Dict[str, Any]:
     Returns:
         A dict representing the JSON file.
     """
-    file = reader.get_read_file_obj(path)
+    file = reader.get_file_obj(path)
     return json.load(file)

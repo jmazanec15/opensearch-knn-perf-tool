@@ -20,31 +20,32 @@
 import logging
 import sys
 
-from okpt.io.config import parser
-from okpt.io.utils import reader, writer
+from okpt.io import args
+from okpt.io.config.parsers import base, tool
+from okpt.io.utils import writer
 
 
 def main():
     """Main function of entry module."""
-    reader.define_args()
-    args = reader.get_args()
+    args.define_args()
+    cli_args = args.get_args()
 
-    if args.command == 'test':
-        tool_config_file_obj = args.config_path
+    if cli_args.command == 'test':
         try:
-            tool_config, service_config, index_spec = parser.validate(
-                tool_config_file_obj)
-            logging.debug('configs are valid!')
-        except parser.ConfigurationError as inst:
-            logging.error(inst.args)
+            parser = tool.ToolParser()
+            tool_config = parser.parse(cli_args.config_path)
+            logging.debug(tool_config)
+            logging.debug('configs are valid.')
+        except base.ConfigurationError as e:
+            logging.error(e.message)
             sys.exit(1)
 
         # TODO: replace data with test results output
         data = {'a': 1, 'b': 2, 'c': 3}
-        output_file_path = args.output_path
+        output_file_path = cli_args.output_path
         writer.write_json(data, output_file_path)
         logging.debug('data written to `%s`', output_file_path.name)
-    elif args.command == 'plot':
+    elif cli_args.command == 'plot':
         pass  # TODO
-    elif args.command == 'compare':
+    elif cli_args.command == 'compare':
         pass  # TODO

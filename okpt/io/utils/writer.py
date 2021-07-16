@@ -17,7 +17,7 @@
 """Provides functions for writing to file.
 
 Functions:
-    get_write_file(): Get a writeable file object.
+    get_file_obj(): Get a writeable file object.
     write_json(): Writes a python dictionary to a JSON file
 """
 
@@ -25,7 +25,7 @@ import json
 from io import TextIOWrapper
 
 
-def get_write_file(path: str) -> TextIOWrapper:
+def get_file_obj(path: str) -> TextIOWrapper:
     """Get a writeable file object from a file path.
 
     Args:
@@ -34,8 +34,7 @@ def get_write_file(path: str) -> TextIOWrapper:
     Returns:
         Writeable file object
     """
-    with open(path, 'w') as file_obj:
-        return file_obj
+    return open(path, 'w')
 
 
 def write_json(data, file):
