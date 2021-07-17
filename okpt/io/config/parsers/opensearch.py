@@ -23,7 +23,7 @@ from io import TextIOWrapper
 from typing import Any, Dict
 
 from okpt.io.config.parsers import base
-from okpt.io.utils import parser
+from okpt.io.utils import reader
 
 
 class OpenSearchParser(base.BaseParser):
@@ -39,5 +39,5 @@ class OpenSearchParser(base.BaseParser):
         """See base class."""
         config_obj = super().parse(file_obj)
         index_spec_path = config_obj['index_spec']
-        index_spec_obj = parser.parse_json_from_path(index_spec_path)
+        index_spec_obj = reader.parse_json_from_path(index_spec_path)
         return {**config_obj, 'index_spec': index_spec_obj}

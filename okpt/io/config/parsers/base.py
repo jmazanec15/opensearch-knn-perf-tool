@@ -29,7 +29,7 @@ from typing import Any, Dict
 
 import cerberus
 
-from okpt.io.utils import parser
+from okpt.io.utils import reader
 
 
 class ConfigurationError(Exception):
@@ -62,12 +62,12 @@ class BaseParser():
         curr_file_dir = os.path.dirname(os.path.abspath(__file__))
         schemas_dir = os.path.join(os.path.dirname(curr_file_dir), 'schemas')
         schema_file_path = os.path.join(schemas_dir, f'{schema_name}.yml')
-        schema_obj = parser.parse_yaml_from_path(schema_file_path)
+        schema_obj = reader.parse_yaml_from_path(schema_file_path)
         return cerberus.Validator(schema_obj)
 
     def parse(self, file_obj: TextIOWrapper) -> Dict[str, Any]:
         """Convert file object to dict, while validating against config schema."""
-        config_obj = parser.parse_yaml(file_obj)
+        config_obj = reader.parse_yaml(file_obj)
         if not self.validator.validate(config_obj):
             raise ConfigurationError(self.validator.errors)
 

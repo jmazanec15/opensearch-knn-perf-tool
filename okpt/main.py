@@ -14,8 +14,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-""" Runner script that serves as the main controller of the testing tool.
-"""
+""" Runner script that serves as the main controller of the testing tool."""
 
 import logging
 import sys
