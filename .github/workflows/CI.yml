@@ -23,4 +23,4 @@ jobs:
 
       # run linting checks
       - name: Linting Checks
-        run: pylint okpt/**/*.py
+        run: pylint okpt/**/*.py ./knn-perf-tool.py
