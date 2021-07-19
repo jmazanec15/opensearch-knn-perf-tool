@@ -1,0 +1,11 @@
+# defined using the cerberus validation API
+# https://docs.python-cerberus.org/en/stable/index.html
+
+method:
+  type: dict
+  schema:
+    name:
+      type: string
+    space_type:
+      type: string
+      allowed: [l2, cosine]

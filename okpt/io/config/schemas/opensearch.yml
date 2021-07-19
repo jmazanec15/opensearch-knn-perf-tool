@@ -1,0 +1,17 @@
+# defined using the cerberus validation API
+# https://docs.python-cerberus.org/en/stable/index.html
+
+index_spec:
+  type: string
+max_num_segments:
+  type: integer
+  min: 1
+  max: 10
+index_thread:
+  type: integer
+  min: 1
+  max: 10
+query_thread:
+  type: integer
+  min: 1
+  max: 10
