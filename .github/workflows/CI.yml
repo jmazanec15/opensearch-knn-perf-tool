@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      # checkout repo
+      - uses: actions/checkout@v2
+
+      # install dependencies
+      - uses: actions/setup-python@v2
+        with:
+          python-version: "3.9.5"
+      - run: |
+          pip install -r requirements.txt
+          pip install pylint
+
+      # run linting checks
+      - name: Linting Checks
+        run: pylint okpt/**/*.py ./knn-perf-tool.py
