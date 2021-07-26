@@ -1,0 +1,9 @@
+version: "3.9"
+
+services:
+  okpt:
+    image: okpt/opensearch
+    volumes:
+      - ./config:/home/test/config
+      - ./output:/home/test/output
+    env_file: ./opensearch.env
