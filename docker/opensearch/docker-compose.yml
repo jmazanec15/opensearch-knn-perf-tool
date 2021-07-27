@@ -6,4 +6,4 @@ services:
     volumes:
       - ./config:/home/test/config
       - ./output:/home/test/output
-    env_file: ./opensearch.env
+    env_file: envs/opensearch.env

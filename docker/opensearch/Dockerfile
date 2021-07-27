@@ -4,6 +4,7 @@ USER root
 RUN yum install -y python3 pip3 util-linux
 RUN useradd -ms /bin/bash test
 
+# Replace the provided OpenSearch config file
 USER opensearch
 ADD --chown=opensearch config/opensearch.yml /usr/share/opensearch/config/opensearch.yml
 
