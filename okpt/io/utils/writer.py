@@ -23,6 +23,7 @@ Functions:
 
 import json
 from io import TextIOWrapper
+from typing import Any, Dict
 
 
 def get_file_obj(path: str) -> TextIOWrapper:
@@ -37,7 +38,7 @@ def get_file_obj(path: str) -> TextIOWrapper:
     return open(path, 'w')
 
 
-def write_json(data, file):
+def write_json(data: Dict[Any, Any], file: TextIOWrapper):
     """Writes a dictionary to a JSON file.
 
     Args:
