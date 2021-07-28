@@ -38,7 +38,7 @@ def get_file_obj(path: str) -> TextIOWrapper:
     return open(path, 'w')
 
 
-def write_json(data: Dict[Any, Any], file: TextIOWrapper):
+def write_json(data, file):
     """Writes a dictionary to a JSON file.
 
     Args:
