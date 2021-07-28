@@ -1,0 +1,8 @@
+test_name: sample_test
+test_type: index
+knn_service: opensearch
+service_config: config/plugin-config.yml
+dataset_path: path
+dataset_format: hdf5
+test_parameters:
+  num_runs: 10
