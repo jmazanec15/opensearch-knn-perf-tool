@@ -22,7 +22,8 @@ RUN useradd -ms /bin/bash test
 
 # Replace the provided OpenSearch config file
 USER opensearch
-ADD --chown=opensearch config/opensearch.yml /usr/share/opensearch/config/opensearch.yml
+ARG OPENSEARCH_STARTUP_CONFIG_PATH
+ADD --chown=opensearch ${OPENSEARCH_STARTUP_CONFIG_PATH} /usr/share/opensearch/config/opensearch.yml
 
 USER test
 WORKDIR /home/test
