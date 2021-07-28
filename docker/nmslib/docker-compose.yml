@@ -18,8 +18,11 @@ version: "3.9"
 
 services:
   okpt:
+    build:
+      context: .
+      dockerfile: "${IMAGE_PATH:-docker/nmslib/Dockerfile}"
+    env_file: "${CONTAINER_ENV_PATH:-docker/nmslib/container.env}"
     image: "${IMAGE_NAME:-okpt/nmslib}"
     volumes:
       - ./config:/home/test/config
       - ./output:/home/test/output
-    env_file: envs/nmslib.env

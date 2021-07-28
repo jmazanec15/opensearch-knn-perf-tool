@@ -18,8 +18,11 @@ version: "3.9"
 
 services:
   okpt:
+    build:
+      context: .
+      dockerfile: "${IMAGE_PATH:-docker/opensearch/Dockerfile}"
+    env_file: "${CONTAINER_ENV_PATH:-docker/opensearch/container.env}"
     image: "${IMAGE_NAME:-okpt/opensearch}"
     volumes:
       - ./config:/home/test/config
       - ./output:/home/test/output
-    env_file: envs/opensearch.env
