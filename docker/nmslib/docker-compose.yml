@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   okpt:
-    image: okpt/nmslib
+    image: "${IMAGE_NAME:-okpt/nmslib}"
     volumes:
       - ./config:/home/test/config
       - ./output:/home/test/output

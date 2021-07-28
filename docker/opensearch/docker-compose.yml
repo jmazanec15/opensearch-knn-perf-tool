@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   okpt:
-    image: okpt/opensearch
+    image: "${IMAGE_NAME:-okpt/opensearch}"
     volumes:
       - ./config:/home/test/config
       - ./output:/home/test/output
