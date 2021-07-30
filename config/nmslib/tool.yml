@@ -1,7 +1,7 @@
-test_name: sample_test
+test_name: nmslib_test
 test_type: index
-knn_service: opensearch
-service_config: config/plugin-config.yml
+knn_service: nmslib
+service_config: config/nmslib/service.yml
 dataset_path: path
 dataset_format: hdf5
 test_parameters:

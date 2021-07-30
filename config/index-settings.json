@@ -1,6 +1,0 @@
-{
-  "settings": { "index": { "knn": true, "knn.space_type": "l2" } },
-  "mappings": {
-    "properties": { "my_vector1": { "type": "knn_vector", "dimension": 5 } }
-  }
-}

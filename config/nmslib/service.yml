@@ -1,0 +1,3 @@
+method:
+  name: hnsw
+  space_type: l2

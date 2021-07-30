@@ -1,4 +1,4 @@
-index_spec: config/index-settings.json
+index_spec: config/opensearch/index-spec.json
 max_num_segments: 10
 index_thread: 5
 query_thread: 2
