@@ -20,7 +20,7 @@ services:
   okpt:
     build:
       args:
-        - OPENSEARCH_STARTUP_CONFIG_PATH=${OPENSEARCH_STARTUP_CONFIG_PATH:-config/opensearch/startup.yml}
+        - OPENSEARCH_STARTUP_CONFIG_PATH=${OPENSEARCH_STARTUP_CONFIG_PATH:-config/opensearch/opensearch.yml}
       context: .
       dockerfile: "${IMAGE_PATH:-docker/opensearch/Dockerfile}"
     env_file: "${CONTAINER_ENV_PATH:-docker/opensearch/container.env}"
