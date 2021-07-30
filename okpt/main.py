@@ -19,6 +19,8 @@
 import logging
 import sys
 
+from elasticsearch import Elasticsearch
+
 from okpt.io import args
 from okpt.io.config.parsers import base, tool
 from okpt.io.utils import writer
@@ -36,8 +38,7 @@ def main():
             logging.debug(tool_config)
             logging.debug('configs are valid.')
 
-            # TODO: replace data with test results output
-            data = {'a': 1, 'b': 2, 'c': 3}
+            # TODO: replace configs with test results output
             output_file_path = cli_args.output_path
             writer.write_json(tool_config, output_file_path)
             logging.debug('data written to `%s`', output_file_path.name)
