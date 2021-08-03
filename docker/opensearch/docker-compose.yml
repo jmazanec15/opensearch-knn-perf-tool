@@ -14,35 +14,17 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-"""Provides functions for writing to file.
+version: "3.9"
 
-Functions:
-    get_file_obj(): Get a writeable file object.
-    write_json(): Writes a python dictionary to a JSON file
-"""
-
-import json
-from io import TextIOWrapper
-from typing import Any, Dict
-
-
-def get_file_obj(path: str) -> TextIOWrapper:
-    """Get a writeable file object from a file path.
-
-    Args:
-        file path
-
-    Returns:
-        Writeable file object
-    """
-    return open(path, 'w')
-
-
-def write_json(data, file):
-    """Writes a dictionary to a JSON file.
-
-    Args:
-        data: A dict to write to JSON.
-        file: Path of output file.
-    """
-    json.dump(data, file)
+services:
+  okpt:
+    build:
+      args:
+        - OPENSEARCH_STARTUP_CONFIG_PATH=${OPENSEARCH_STARTUP_CONFIG_PATH:-config/opensearch/opensearch.yml}
+      context: .
+      dockerfile: "${IMAGE_PATH:-docker/opensearch/Dockerfile}"
+    env_file: "${CONTAINER_ENV_PATH:-docker/opensearch/container.env}"
+    image: "${IMAGE_NAME:-okpt/opensearch}"
+    volumes:
+      - ./config:/home/test/config
+      - ./output:/home/test/output

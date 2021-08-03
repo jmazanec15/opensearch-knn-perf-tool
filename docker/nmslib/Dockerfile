@@ -14,35 +14,18 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-"""Provides functions for writing to file.
+FROM amazonlinux:latest
 
-Functions:
-    get_file_obj(): Get a writeable file object.
-    write_json(): Writes a python dictionary to a JSON file
-"""
+RUN yum install -y python3 pip3 util-linux
+RUN useradd -ms /bin/bash test
+USER test
+WORKDIR /home/test
 
-import json
-from io import TextIOWrapper
-from typing import Any, Dict
+ADD --chown=test requirements.txt .
+RUN pip3 install -r requirements.txt
+ADD --chown=test okpt okpt
+ADD --chown=test scripts scripts
+ADD --chown=test knn-perf-tool.py .
+RUN chmod -R u+x scripts
 
-
-def get_file_obj(path: str) -> TextIOWrapper:
-    """Get a writeable file object from a file path.
-
-    Args:
-        file path
-
-    Returns:
-        Writeable file object
-    """
-    return open(path, 'w')
-
-
-def write_json(data, file):
-    """Writes a dictionary to a JSON file.
-
-    Args:
-        data: A dict to write to JSON.
-        file: Path of output file.
-    """
-    json.dump(data, file)
+CMD scripts/nmslib-entrypoint.sh

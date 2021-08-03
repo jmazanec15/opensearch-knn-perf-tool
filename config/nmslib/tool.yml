@@ -1,0 +1,8 @@
+test_name: nmslib_test
+test_type: index
+knn_service: nmslib
+service_config: config/nmslib/service.yml
+dataset_path: path
+dataset_format: hdf5
+test_parameters:
+  num_runs: 10

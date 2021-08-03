@@ -14,35 +14,6 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-"""Provides functions for writing to file.
+#!/usr/bin/env bash
 
-Functions:
-    get_file_obj(): Get a writeable file object.
-    write_json(): Writes a python dictionary to a JSON file
-"""
-
-import json
-from io import TextIOWrapper
-from typing import Any, Dict
-
-
-def get_file_obj(path: str) -> TextIOWrapper:
-    """Get a writeable file object from a file path.
-
-    Args:
-        file path
-
-    Returns:
-        Writeable file object
-    """
-    return open(path, 'w')
-
-
-def write_json(data, file):
-    """Writes a dictionary to a JSON file.
-
-    Args:
-        data: A dict to write to JSON.
-        file: Path of output file.
-    """
-    json.dump(data, file)
+python3 knn-perf-tool.py "$OKPT_COMMAND" "$OKPT_CONFIG_PATH" "$OKPT_OUTPUT_PATH"

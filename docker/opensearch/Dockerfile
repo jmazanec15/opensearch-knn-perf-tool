@@ -14,35 +14,25 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-"""Provides functions for writing to file.
+FROM opensearchproject/opensearch
 
-Functions:
-    get_file_obj(): Get a writeable file object.
-    write_json(): Writes a python dictionary to a JSON file
-"""
+USER root
+RUN yum install -y python3 pip3 util-linux
+RUN useradd -ms /bin/bash test
 
-import json
-from io import TextIOWrapper
-from typing import Any, Dict
+# Replace the provided OpenSearch config file
+USER opensearch
+ARG OPENSEARCH_STARTUP_CONFIG_PATH
+ADD --chown=opensearch ${OPENSEARCH_STARTUP_CONFIG_PATH} /usr/share/opensearch/config/opensearch.yml
 
+USER test
+WORKDIR /home/test
+ADD --chown=test requirements.txt .
+RUN pip3 install -r requirements.txt --user
+ADD --chown=test okpt okpt
+ADD --chown=test scripts scripts
+ADD --chown=test knn-perf-tool.py .
+RUN chmod -R u+x scripts
 
-def get_file_obj(path: str) -> TextIOWrapper:
-    """Get a writeable file object from a file path.
-
-    Args:
-        file path
-
-    Returns:
-        Writeable file object
-    """
-    return open(path, 'w')
-
-
-def write_json(data, file):
-    """Writes a dictionary to a JSON file.
-
-    Args:
-        data: A dict to write to JSON.
-        file: Path of output file.
-    """
-    json.dump(data, file)
+USER root
+CMD scripts/opensearch-entrypoint.sh
