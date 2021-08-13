@@ -1,19 +1,17 @@
-import json
-import logging
 from typing import Any, Dict, List
 
 import h5py
-import nmslib
 from elasticsearch import Elasticsearch, RequestsHttpConnection
 from okpt.io.config.parsers.nmslib import NmslibConfig
 from okpt.io.config.parsers.opensearch import OpenSearchConfig
 from okpt.io.config.parsers.tool import Dataset
+from okpt.test import nmslib
 from okpt.test.opensearch import (bulk_index, bulk_transform_vectors,
-                                  create_index, delete_index, disable_refresh,
-                                  query_index, refresh_index)
+                                  create_index, delete_index, query_index,
+                                  refresh_index)
 
 
-def aggregate_steps(steps: List[Dict[str, Any]]):
+def _aggregate_steps(steps: List[Dict[str, Any]]):
     results = {'took': {'total': 0}}
     for step in steps:
         label, took = (step['label'], step['took'])
@@ -85,12 +83,7 @@ class OpenSearchIndexTest(OpenSearchTest):
 
     def execute(self):
         step_results = self.index_vectors()
-        test_result = aggregate_steps(step_results)
-        # logging.info(self.es.cat.indices(index=self.index_name, v=True))
-        # logging.info(
-        #     json.dumps(self.es.indices.get(self.index_name), indent=2) + '\n')
-        # logging.info(
-        #     json.dumps(self.es.indices.stats(index=self.index_name), indent=2))
+        test_result = _aggregate_steps(step_results)
         self.cleanup()
         return test_result
 
@@ -137,20 +130,54 @@ class OpenSearchQueryTest(OpenSearchTest):
 
     def execute(self):
         step_results = self.query_vectors(self.dataset.test)
-        test_result = aggregate_steps(step_results)
-        # logging.info(
-        #     json.dumps(self.es.indices.stats(index=self.index_name), indent=2))
+        test_result = _aggregate_steps(step_results)
         self.cleanup()
         return test_result
 
 
-class NmslibTest(Test):
-    def __init__(self, service_config: NmslibConfig):
-        self.nmslib = nmslib.init(method='hnsw',
-                                  space=service_config.method.space)
+class NmslibIndexTest(Test):
+    def __init__(self, service_config: NmslibConfig, dataset: Dataset):
+        self.service_config = service_config
+        self.dataset = dataset
 
-    def setup(self):
-        pass
+    def index_vectors(self):
+        results = []
+        result = nmslib.init_index(space=self.service_config.method.space)
+        self.index = result['index']
+        results.append(result)
+        results.append(
+            nmslib.bulk_index(index=self.index, dataset=self.dataset.train[:]))
+        results.append(nmslib.create_index(index=self.index))
+        return results
 
     def execute(self):
-        pass
+        step_results = self.index_vectors()
+        test_result = _aggregate_steps(step_results)
+        return test_result
+
+
+class NmslibQueryTest(Test):
+    def __init__(self, service_config: NmslibConfig, dataset: Dataset):
+        self.service_config = service_config
+        self.dataset = dataset
+
+    def setup(self):
+        result = nmslib.init_index(space=self.service_config.method.space)
+        self.index = result['index']
+        nmslib.bulk_index(index=self.index, dataset=self.dataset.train[:])
+        nmslib.create_index(index=self.index)
+
+    def query_vectors(self, dataset: h5py.Dataset):
+        results = []
+
+        for vec in dataset:
+            k = 10
+            results.append(
+                nmslib.query_index(index=self.index, vector=vec, k=k))
+
+        return results
+
+    def execute(self):
+        step_results = self.query_vectors(dataset=self.dataset.test)
+        test_result = aggregate_steps(step_results)
+        return test_result
