@@ -1,5 +1,5 @@
 test_name: opensearch_test
-test_type: index
+test_id: 2
 knn_service: opensearch
 service_config: config/opensearch/service.yml
 dataset: dataset/data.hdf5

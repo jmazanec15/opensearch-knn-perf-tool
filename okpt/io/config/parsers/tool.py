@@ -38,7 +38,7 @@ class TestParameters:
 @dataclass
 class ToolConfig:
     test_name: str
-    test_type: str
+    test_id: int
     knn_service: str
     service_config: Union[OpenSearchConfig, NmslibConfig]
     dataset: Union[h5py.File, Dict[str, Any]]
@@ -88,7 +88,7 @@ class ToolParser(base.BaseParser):
                                  config_obj['dataset_format'])
         tool_config = ToolConfig(
             test_name=config_obj['test_name'],
-            test_type=config_obj['test_type'],
+            test_id=config_obj['test_id'],
             knn_service=config_obj['knn_service'],
             service_config=config_parser.parse(service_config_file_obj),
             dataset=dataset,

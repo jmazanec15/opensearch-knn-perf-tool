@@ -3,9 +3,8 @@
 
 test_name:
   type: string
-test_type:
-  type: string
-  allowed: [index, query]
+test_id:
+  type: number
 knn_service:
   type: string
   allowed: [opensearch, nmslib]
