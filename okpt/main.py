@@ -16,14 +16,14 @@
 # under the License.
 """ Runner script that serves as the main controller of the testing tool."""
 
+import json
 import logging
 import sys
 
-from elasticsearch import Elasticsearch
-
 from okpt.io import args
-from okpt.io.config.parsers import base, tool
+from okpt.io.config.parsers import tool
 from okpt.io.config.parsers.base import ConfigurationError
+from okpt.test.test import OpenSearchIndexTest, OpenSearchQueryTest
 
 
 def main():
@@ -39,13 +39,17 @@ def main():
             parser = tool.ToolParser()
             tool_config = parser.parse(cli_args.config)
             logging.info('Configs are valid.')
-            logging.debug('configs are valid.')
+
+            # opensearch_test = OpenSearchIndexTest(tool_config.service_config,
+            #                                       tool_config.dataset)
+            opensearch_test = OpenSearchQueryTest(tool_config.service_config,
+                                                  tool_config.dataset)
+            test_result = opensearch_test.execute()
+            logging.info(json.dumps(test_result, indent=4))
 
             # TODO: replace configs with test results output
             output_file_path = cli_args.output_path
         except ConfigurationError as e:
-            logging.debug('data written to `%s`', output_file_path.name)
-        except base.ConfigurationError as e:
             logging.error(e.message)
             sys.exit(1)
 
