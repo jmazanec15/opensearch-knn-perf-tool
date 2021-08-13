@@ -11,7 +11,7 @@ def init_index(space: str):
     return {'index': index}
 
 
-@label('bulk_index')
+@label('bulk_add')
 @measure
 def bulk_index(index: nmslib.dist.FloatIndex, dataset: np.ndarray):
     index.addDataPointBatch(data=dataset)

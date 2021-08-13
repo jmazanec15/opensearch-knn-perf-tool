@@ -40,7 +40,7 @@ def bulk_index(es: Elasticsearch, index_name: str,
                sections: Iterable[np.ndarray]):
     @label('bulk_add')
     def bulk(index, body):
-        return es.bulk(index=index, body=body)
+        return es.bulk(index=index, body=body, timeout='60s')
 
     results = []
     for section in sections:

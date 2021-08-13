@@ -2,13 +2,10 @@ from typing import Any, Dict, List
 
 import h5py
 from elasticsearch import Elasticsearch, RequestsHttpConnection
+from okpt.io.config.parsers import tool
 from okpt.io.config.parsers.nmslib import NmslibConfig
 from okpt.io.config.parsers.opensearch import OpenSearchConfig
-from okpt.io.config.parsers.tool import Dataset
-from okpt.test import nmslib
-from okpt.test.opensearch import (bulk_index, bulk_transform_vectors,
-                                  create_index, delete_index, query_index,
-                                  refresh_index)
+from okpt.test import nmslib, opensearch
 
 
 def _aggregate_steps(steps: List[Dict[str, Any]]):
@@ -36,7 +33,6 @@ class OpenSearchTest(Test):
     def __init__(self, service_config: OpenSearchConfig):
         self.index_name = 'test_index'
         self.service_config = service_config
-        self.index_spec = service_config.index_spec
         self.es = Elasticsearch(hosts=[{
             'host': 'localhost',
             'port': 9200
@@ -47,7 +43,10 @@ class OpenSearchTest(Test):
 
     def setup(self):
         body = {
-            'knn.algo_param.index_thread_qty': self.service_config.index_thread
+            'transient': {
+                'knn.algo_param.index_thread_qty':
+                self.service_config.index_thread
+            }
         }
         self.es.cluster.put_settings(body=body)
 
@@ -56,30 +55,34 @@ class OpenSearchTest(Test):
 
 
 class OpenSearchIndexTest(OpenSearchTest):
-    def __init__(self, service_config: OpenSearchConfig, dataset: Dataset):
+    def __init__(self, service_config: OpenSearchConfig,
+                 dataset: tool.Dataset):
         super().__init__(service_config)
         self.dataset = dataset
         self.action = {'index': {'_index': self.index_name}}
 
-        # split training set into sections for bulk ingestion
-        bulk_size = 5000
-        self.sections = bulk_transform_vectors(self.dataset.train, self.action,
-                                               bulk_size)
-
     def setup(self):
-        pass
+        super().setup()
+
+        # split training set into sections for bulk ingestion
+        bulk_size = 1000
+        self.sections = opensearch.bulk_transform_vectors(
+            self.dataset.train, self.action, bulk_size)
 
     def index_vectors(self):
         results = []
 
-        results.append(create_index(self.es, self.index_name, self.index_spec))
-        results += bulk_index(self.es, self.index_name, self.sections)
-        results.append(refresh_index(self.es, self.index_name))
+        results.append(
+            opensearch.create_index(self.es, self.index_name,
+                                    self.service_config.index_spec))
+        results += opensearch.bulk_index(self.es, self.index_name,
+                                         self.sections)
+        results.append(opensearch.refresh_index(self.es, self.index_name))
 
         return results
 
     def cleanup(self):
-        delete_index(es=self.es, index_name=self.index_name)
+        opensearch.delete_index(es=self.es, index_name=self.index_name)
 
     def execute(self):
         step_results = self.index_vectors()
@@ -89,23 +92,28 @@ class OpenSearchIndexTest(OpenSearchTest):
 
 
 class OpenSearchQueryTest(OpenSearchTest):
-    def __init__(self, service_config: OpenSearchConfig, dataset: Dataset):
+    def __init__(self, service_config: OpenSearchConfig,
+                 dataset: tool.Dataset):
         super().__init__(service_config)
         self.dataset = dataset
         self.action = {'index': {'_index': self.index_name}}
 
+    def setup(self):
+        super().setup()
+
         # split training set into sections for bulk ingestion
         bulk_size = 5000
-        self.sections = bulk_transform_vectors(self.dataset.train, self.action,
-                                               bulk_size)
+        self.sections = opensearch.bulk_transform_vectors(
+            self.dataset.train, self.action, bulk_size)
 
-        create_index(self.es, self.index_name, self.index_spec)
-        bulk_index(self.es, self.index_name, self.sections)
+        opensearch.create_index(self.es, self.index_name,
+                                self.service_config.index_spec)
+        opensearch.bulk_index(self.es, self.index_name, self.sections)
 
     def query_vectors(self, dataset: h5py.Dataset):
         results = []
 
-        for vec in dataset[:10]:
+        for vec in dataset:
             k = 10
             body = {
                 'size': 10,
@@ -118,15 +126,15 @@ class OpenSearchQueryTest(OpenSearchTest):
                     }
                 }
             }
-            result = query_index(es=self.es,
-                                 index_name=self.index_name,
-                                 body=body)
+            result = opensearch.query_index(es=self.es,
+                                            index_name=self.index_name,
+                                            body=body)
             results.append(result)
 
         return results
 
     def cleanup(self):
-        delete_index(es=self.es, index_name=self.index_name)
+        opensearch.delete_index(es=self.es, index_name=self.index_name)
 
     def execute(self):
         step_results = self.query_vectors(self.dataset.test)
@@ -136,7 +144,7 @@ class OpenSearchQueryTest(OpenSearchTest):
 
 
 class NmslibIndexTest(Test):
-    def __init__(self, service_config: NmslibConfig, dataset: Dataset):
+    def __init__(self, service_config: NmslibConfig, dataset: tool.Dataset):
         self.service_config = service_config
         self.dataset = dataset
 
@@ -157,7 +165,7 @@ class NmslibIndexTest(Test):
 
 
 class NmslibQueryTest(Test):
-    def __init__(self, service_config: NmslibConfig, dataset: Dataset):
+    def __init__(self, service_config: NmslibConfig, dataset: tool.Dataset):
         self.service_config = service_config
         self.dataset = dataset
 
@@ -179,5 +187,5 @@ class NmslibQueryTest(Test):
 
     def execute(self):
         step_results = self.query_vectors(dataset=self.dataset.test)
-        test_result = aggregate_steps(step_results)
+        test_result = _aggregate_steps(step_results)
         return test_result
