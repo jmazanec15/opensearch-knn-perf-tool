@@ -98,7 +98,7 @@ class ToolArgs:
     log: str
     command: str
     config: TextIOWrapper
-    output_path: str
+    output: TextIOWrapper
 
 
 def get_args() -> ToolArgs:
@@ -111,5 +111,5 @@ def get_args() -> ToolArgs:
     args = ToolArgs(log=args.log,
                     command=args.command,
                     config=args.config_path,
-                    output_path=args.output_path)
+                    output=args.output_path)
     return args
