@@ -1,5 +1,7 @@
 Cerberus
 elasticsearch
 nmslib
-numpy
 PyYAML
+numpy
+h5py
+requests

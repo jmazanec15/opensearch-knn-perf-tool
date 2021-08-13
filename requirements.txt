@@ -7,14 +7,23 @@
 cerberus==1.3.4
     # via -r requirements.in
 certifi==2021.5.30
-    # via elasticsearch
+    # via
+    #   elasticsearch
+    #   requests
+charset-normalizer==2.0.4
+    # via requests
 elasticsearch==7.13.3
     # via -r requirements.in
+h5py==3.3.0
+    # via -r requirements.in
+idna==3.2
+    # via requests
 nmslib==2.1.1
     # via -r requirements.in
 numpy==1.21.0
     # via
     #   -r requirements.in
+    #   h5py
     #   nmslib
 psutil==5.8.0
     # via nmslib
@@ -22,8 +31,12 @@ pybind11==2.6.1
     # via nmslib
 pyyaml==5.4.1
     # via -r requirements.in
+requests==2.26.0
+    # via -r requirements.in
 urllib3==1.26.6
-    # via elasticsearch
+    # via
+    #   elasticsearch
+    #   requests
 
 # The following packages are considered to be unsafe in a requirements file:
 # setuptools
