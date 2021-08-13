@@ -23,13 +23,15 @@ import sys
 from okpt.io import args
 from okpt.io.config.parsers import tool
 from okpt.io.config.parsers.base import ConfigurationError
-from okpt.test.test import OpenSearchIndexTest, OpenSearchQueryTest
+from okpt.io.utils.writer import write_json
+from okpt.test.tester import Tester
 
 
 def main():
     """Main function of entry module."""
     args.define_args()
     cli_args = args.get_args()
+    output = cli_args.output
     if cli_args.log:
         log_level = getattr(logging, cli_args.log.upper())
         logging.basicConfig(level=log_level)
@@ -40,15 +42,10 @@ def main():
             tool_config = parser.parse(cli_args.config)
             logging.info('Configs are valid.')
 
-            # opensearch_test = OpenSearchIndexTest(tool_config.service_config,
-            #                                       tool_config.dataset)
-            opensearch_test = OpenSearchQueryTest(tool_config.service_config,
-                                                  tool_config.dataset)
-            test_result = opensearch_test.execute()
-            logging.info(json.dumps(test_result, indent=4))
-
-            # TODO: replace configs with test results output
-            output_file_path = cli_args.output_path
+            test = Tester(tool_config=tool_config)
+            test_result = test.execute()
+            logging.info(json.dumps(test_result, indent=2))
+            write_json(data=test_result, file=output)
         except ConfigurationError as e:
             logging.error(e.message)
             sys.exit(1)
