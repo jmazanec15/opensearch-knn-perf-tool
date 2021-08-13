@@ -22,17 +22,32 @@ def _aggregate_steps(steps: List[Dict[str, Any]]):
 
 
 class Test():
+    def __init__(self, service_config, dataset: tool.Dataset):
+        self.service_config = service_config
+        self.dataset = dataset
+        self.step_results = []
+
     def setup(self):
         pass
 
-    def execute(self):
+    def run_steps(self):
         pass
+
+    def cleanup(self):
+        pass
+
+    def execute(self):
+        self.run_steps()
+        self.cleanup()
+        return _aggregate_steps(self.step_results)
 
 
 class OpenSearchTest(Test):
-    def __init__(self, service_config: OpenSearchConfig):
+    def __init__(self, service_config: OpenSearchConfig,
+                 dataset: tool.Dataset):
+        super().__init__(service_config, dataset)
+
         self.index_name = 'test_index'
-        self.service_config = service_config
         self.es = Elasticsearch(hosts=[{
             'host': 'localhost',
             'port': 9200
@@ -50,52 +65,12 @@ class OpenSearchTest(Test):
         }
         self.es.cluster.put_settings(body=body)
 
-    def execute(self):
-        pass
-
 
 class OpenSearchIndexTest(OpenSearchTest):
     def __init__(self, service_config: OpenSearchConfig,
                  dataset: tool.Dataset):
-        super().__init__(service_config)
-        self.dataset = dataset
-        self.action = {'index': {'_index': self.index_name}}
+        super().__init__(service_config, dataset)
 
-    def setup(self):
-        super().setup()
-
-        # split training set into sections for bulk ingestion
-        bulk_size = 1000
-        self.sections = opensearch.bulk_transform_vectors(
-            self.dataset.train, self.action, bulk_size)
-
-    def index_vectors(self):
-        results = []
-
-        results.append(
-            opensearch.create_index(self.es, self.index_name,
-                                    self.service_config.index_spec))
-        results += opensearch.bulk_index(self.es, self.index_name,
-                                         self.sections)
-        results.append(opensearch.refresh_index(self.es, self.index_name))
-
-        return results
-
-    def cleanup(self):
-        opensearch.delete_index(es=self.es, index_name=self.index_name)
-
-    def execute(self):
-        step_results = self.index_vectors()
-        test_result = _aggregate_steps(step_results)
-        self.cleanup()
-        return test_result
-
-
-class OpenSearchQueryTest(OpenSearchTest):
-    def __init__(self, service_config: OpenSearchConfig,
-                 dataset: tool.Dataset):
-        super().__init__(service_config)
-        self.dataset = dataset
         self.action = {'index': {'_index': self.index_name}}
 
     def setup(self):
@@ -106,14 +81,38 @@ class OpenSearchQueryTest(OpenSearchTest):
         self.sections = opensearch.bulk_transform_vectors(
             self.dataset.train, self.action, bulk_size)
 
+    def run_steps(self):
+        self.step_results += [
+            opensearch.create_index(self.es, self.index_name,
+                                    self.service_config.index_spec),
+            *opensearch.bulk_index(self.es, self.index_name, self.sections),
+            opensearch.refresh_index(self.es, self.index_name)
+        ]
+
+    def cleanup(self):
+        opensearch.delete_index(es=self.es, index_name=self.index_name)
+
+
+class OpenSearchQueryTest(OpenSearchTest):
+    def __init__(self, service_config: OpenSearchConfig,
+                 dataset: tool.Dataset):
+        super().__init__(service_config, dataset)
+
+        self.action = {'index': {'_index': self.index_name}}
+
+    def setup(self):
+        super().setup()
+
+        # split training set into sections for bulk ingestion
+        bulk_size = 5000
+        self.sections = opensearch.bulk_transform_vectors(
+            self.dataset.train, self.action, bulk_size)
         opensearch.create_index(self.es, self.index_name,
                                 self.service_config.index_spec)
         opensearch.bulk_index(self.es, self.index_name, self.sections)
 
-    def query_vectors(self, dataset: h5py.Dataset):
-        results = []
-
-        for vec in dataset:
+    def run_steps(self):
+        for vec in self.dataset.test:
             k = 10
             body = {
                 'size': 10,
@@ -129,44 +128,32 @@ class OpenSearchQueryTest(OpenSearchTest):
             result = opensearch.query_index(es=self.es,
                                             index_name=self.index_name,
                                             body=body)
-            results.append(result)
-
-        return results
+            self.step_results.append(result)
 
     def cleanup(self):
         opensearch.delete_index(es=self.es, index_name=self.index_name)
 
-    def execute(self):
-        step_results = self.query_vectors(self.dataset.test)
-        test_result = _aggregate_steps(step_results)
-        self.cleanup()
-        return test_result
-
 
 class NmslibIndexTest(Test):
     def __init__(self, service_config: NmslibConfig, dataset: tool.Dataset):
-        self.service_config = service_config
+        super().__init__(service_config, dataset)
+
         self.dataset = dataset
 
-    def index_vectors(self):
-        results = []
+    def run_steps(self):
         result = nmslib.init_index(space=self.service_config.method.space)
         self.index = result['index']
-        results.append(result)
-        results.append(
-            nmslib.bulk_index(index=self.index, dataset=self.dataset.train[:]))
-        results.append(nmslib.create_index(index=self.index))
-        return results
-
-    def execute(self):
-        step_results = self.index_vectors()
-        test_result = _aggregate_steps(step_results)
-        return test_result
+        self.step_results += [
+            result,
+            nmslib.bulk_index(index=self.index, dataset=self.dataset.train[:]),
+            nmslib.create_index(index=self.index)
+        ]
 
 
 class NmslibQueryTest(Test):
     def __init__(self, service_config: NmslibConfig, dataset: tool.Dataset):
-        self.service_config = service_config
+        super().__init__(service_config, dataset)
+
         self.dataset = dataset
 
     def setup(self):
@@ -175,17 +162,8 @@ class NmslibQueryTest(Test):
         nmslib.bulk_index(index=self.index, dataset=self.dataset.train[:])
         nmslib.create_index(index=self.index)
 
-    def query_vectors(self, dataset: h5py.Dataset):
-        results = []
-
-        for vec in dataset:
+    def run_steps(self):
+        for vec in self.dataset.train:
             k = 10
-            results.append(
-                nmslib.query_index(index=self.index, vector=vec, k=k))
-
-        return results
-
-    def execute(self):
-        step_results = self.query_vectors(dataset=self.dataset.test)
-        test_result = _aggregate_steps(step_results)
-        return test_result
+            result = nmslib.query_index(index=self.index, vector=vec, k=k)
+            self.step_results.append(result)
