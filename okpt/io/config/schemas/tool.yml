@@ -11,7 +11,7 @@ knn_service:
   allowed: [opensearch, nmslib]
 service_config:
   type: string
-dataset_path:
+dataset:
   type: string
 dataset_format:
   type: string

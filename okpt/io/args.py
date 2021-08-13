@@ -25,7 +25,8 @@ Functions:
 """
 
 import argparse
-from collections import namedtuple
+from dataclasses import dataclass
+from io import TextIOWrapper
 
 _readable_file_type = argparse.FileType('r')
 _writable_file_type = argparse.FileType('w')
@@ -77,6 +78,10 @@ _parser = argparse.ArgumentParser(
 
 def define_args():
     """Define tool commands."""
+    _parser.add_argument(
+        '--log',
+        type=str,
+        choices=['debug', 'info', 'warning', 'error', 'critical'])
     subparsers = _parser.add_subparsers(title='commands',
                                         dest='command',
                                         help='sub-command help')
@@ -88,16 +93,23 @@ def define_args():
     _add_compare_subcommand(subparsers)
 
 
-_ToolArgs = namedtuple('args', 'command config_path output_path')
+@dataclass
+class ToolArgs:
+    log: str
+    command: str
+    config: TextIOWrapper
+    output_path: str
 
 
-def get_args() -> _ToolArgs:
+def get_args() -> ToolArgs:
     """Parses and returns the command line args.
 
     Returns:
         A dict containing the command line args.
     """
     args = _parser.parse_args()
-    args_dict = vars(args)
-    return _ToolArgs(args_dict['command'], args_dict['config_path'],
-                     args_dict['output_path'])
+    args = ToolArgs(log=args.log,
+                    command=args.command,
+                    config=args.config_path,
+                    output_path=args.output_path)
+    return args

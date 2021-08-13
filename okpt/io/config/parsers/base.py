@@ -28,7 +28,6 @@ from io import TextIOWrapper
 from typing import Any, Dict
 
 import cerberus
-
 from okpt.io.utils import reader
 
 
@@ -65,7 +64,7 @@ class BaseParser():
         schema_obj = reader.parse_yaml_from_path(schema_file_path)
         return cerberus.Validator(schema_obj)
 
-    def parse(self, file_obj: TextIOWrapper) -> Dict[str, Any]:
+    def parse(self, file_obj: TextIOWrapper):
         """Convert file object to dict, while validating against config schema."""
         config_obj = reader.parse_yaml(file_obj)
         if not self.validator.validate(config_obj):

@@ -16,4 +16,8 @@
 # under the License.
 #!/usr/bin/env bash
 
-python3 knn-perf-tool.py "$OKPT_COMMAND" "$OKPT_CONFIG_PATH" "$OKPT_OUTPUT_PATH"
+if [[ -z $OKPT_LOG_LEVEL ]]; then
+  python3 knn-perf-tool.py $OKPT_COMMAND $OKPT_CONFIG_PATH $OKPT_OUTPUT_PATH
+else
+  python3 knn-perf-tool.py --log $OKPT_LOG_LEVEL $OKPT_COMMAND $OKPT_CONFIG_PATH $OKPT_OUTPUT_PATH
+fi

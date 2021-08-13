@@ -6,6 +6,6 @@ method:
   schema:
     name:
       type: string
-    space_type:
+    space:
       type: string
-      allowed: [l2, cosine]
+      allowed: [l2, cosinesimil]
