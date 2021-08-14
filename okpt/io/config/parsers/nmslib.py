@@ -21,20 +21,29 @@ Classes:
 """
 from dataclasses import dataclass
 from io import TextIOWrapper
-from typing import Any, Dict
 
 from okpt.io.config.parsers import base
 
 
 @dataclass
-class Method:
+class MethodParametersConfig:
+    ef_construction: int
+    ef_search: int
+    M: int
+    index_thread_qty: int
+    post: int
+
+
+@dataclass
+class MethodConfig:
     name: str
-    space: str
+    space_type: str
+    parameters: MethodParametersConfig
 
 
 @dataclass
 class NmslibConfig:
-    method: Method
+    method: MethodConfig
 
 
 class NmslibParser(base.BaseParser):
@@ -48,8 +57,17 @@ class NmslibParser(base.BaseParser):
 
     def parse(self, file_obj: TextIOWrapper) -> NmslibConfig:
         """See base class."""
-        config_obj = super().parse(file_obj)
-        nmslib_config = NmslibConfig(
-            method=Method(name=config_obj['method']['name'],
-                          space=config_obj['method']['space']))
+        config = super().parse(file_obj)
+        method_config = config['method']
+        parameters_config = method_config['parameters']
+        nmslib_config = NmslibConfig(method=MethodConfig(
+            name=method_config['name'],
+            space_type=method_config['space_type'],
+            parameters=MethodParametersConfig(
+                ef_construction=parameters_config['ef_construction'],
+                ef_search=parameters_config['ef_search'],
+                M=parameters_config['M'],
+                index_thread_qty=parameters_config['index_thread_qty'],
+                post=parameters_config['post'],
+            )))
         return nmslib_config

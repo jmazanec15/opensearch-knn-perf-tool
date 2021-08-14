@@ -6,6 +6,19 @@ method:
   schema:
     name:
       type: string
-    space:
+    space_type:
       type: string
       allowed: [l2, cosinesimil]
+    parameters:
+      type: dict
+      schema:
+        ef_construction:
+          type: integer
+        ef_search:
+          type: integer
+        M:
+          type: integer
+        index_thread_qty:
+          type: integer
+        post:
+          type: integer

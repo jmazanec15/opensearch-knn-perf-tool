@@ -1,3 +1,9 @@
 method:
   name: hnsw
-  space: l2
+  space_type: l2
+  parameters:
+    ef_construction: 100
+    ef_search: 100
+    M: 5
+    index_thread_qty: 1
+    post: 2
