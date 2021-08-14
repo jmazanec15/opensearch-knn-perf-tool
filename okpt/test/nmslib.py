@@ -1,4 +1,5 @@
 import numpy as np
+from okpt.io.config.parsers.nmslib import NmslibConfig
 from okpt.test.profile import label, measure
 
 import nmslib
@@ -6,8 +7,9 @@ import nmslib
 
 @label('init_index')
 @measure
-def init_index(space: str):
-    index = nmslib.init(space=space)
+def init_index(service_config: NmslibConfig):
+    index = nmslib.init(method=service_config.method.name,
+                        space=service_config.method.space_type)
     return {'index': index}
 
 
@@ -20,8 +22,13 @@ def bulk_index(index: nmslib.dist.FloatIndex, dataset: np.ndarray):
 
 @label('create_index')
 @measure
-def create_index(index: nmslib.dist.FloatIndex):
-    index.createIndex()
+def create_index(index: nmslib.dist.FloatIndex, service_config: NmslibConfig):
+    index.createIndex({
+        'efConstruction': service_config.method.parameters.ef_construction,
+        'M': service_config.method.parameters.M,
+        'indexThreadQty': service_config.method.parameters.index_thread_qty,
+        'post': service_config.method.parameters.post
+    })
     return {}
 
 

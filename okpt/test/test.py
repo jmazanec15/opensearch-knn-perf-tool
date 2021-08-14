@@ -1,6 +1,5 @@
 from typing import Any, Dict, List
 
-import h5py
 from elasticsearch import Elasticsearch, RequestsHttpConnection
 from okpt.io.config.parsers import tool
 from okpt.io.config.parsers.nmslib import NmslibConfig
@@ -25,6 +24,7 @@ class Test():
     def __init__(self, service_config, dataset: tool.Dataset):
         self.service_config = service_config
         self.dataset = dataset
+        self.bulk_size = 5000
         self.step_results = []
 
     def setup(self):
@@ -77,9 +77,8 @@ class OpenSearchIndexTest(OpenSearchTest):
         super().setup()
 
         # split training set into sections for bulk ingestion
-        bulk_size = 5000
         self.sections = opensearch.bulk_transform_vectors(
-            self.dataset.train, self.action, bulk_size)
+            self.dataset.train, self.action, self.bulk_size)
 
     def run_steps(self):
         self.step_results += [
@@ -104,9 +103,8 @@ class OpenSearchQueryTest(OpenSearchTest):
         super().setup()
 
         # split training set into sections for bulk ingestion
-        bulk_size = 5000
         self.sections = opensearch.bulk_transform_vectors(
-            self.dataset.train, self.action, bulk_size)
+            self.dataset.train, self.action, self.bulk_size)
         opensearch.create_index(self.es, self.index_name,
                                 self.service_config.index_spec)
         opensearch.bulk_index(self.es, self.index_name, self.sections)
@@ -141,12 +139,13 @@ class NmslibIndexTest(Test):
         self.dataset = dataset
 
     def run_steps(self):
-        result = nmslib.init_index(space=self.service_config.method.space)
+        result = nmslib.init_index(service_config=self.service_config)
         self.index = result['index']
         self.step_results += [
             result,
             nmslib.bulk_index(index=self.index, dataset=self.dataset.train[:]),
-            nmslib.create_index(index=self.index)
+            nmslib.create_index(index=self.index,
+                                service_config=self.service_config)
         ]
 
 
@@ -157,12 +156,15 @@ class NmslibQueryTest(Test):
         self.dataset = dataset
 
     def setup(self):
-        result = nmslib.init_index(space=self.service_config.method.space)
+        result = nmslib.init_index(service_config=self.service_config)
         self.index = result['index']
         nmslib.bulk_index(index=self.index, dataset=self.dataset.train[:])
-        nmslib.create_index(index=self.index)
+        nmslib.create_index(index=self.index,
+                            service_config=self.service_config)
 
     def run_steps(self):
+        self.index.setQueryTimeParams(
+            {'efSearch': self.service_config.method.parameters.ef_search})
         for vec in self.dataset.train:
             k = 10
             result = nmslib.query_index(index=self.index, vector=vec, k=k)
