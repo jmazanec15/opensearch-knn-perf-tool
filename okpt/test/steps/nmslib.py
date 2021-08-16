@@ -1,27 +1,27 @@
 import numpy as np
 from okpt.io.config.parsers import nmslib as nmslib_parser
-from okpt.test.profile import label, measure
+from okpt.test import profile
 
 import nmslib
 
 
-@label('init_index')
-@measure
+@profile.label('init_index')
+@profile.measure
 def init_index(service_config: nmslib_parser.NmslibConfig):
     index = nmslib.init(method=service_config.method.name,
                         space=service_config.method.space_type)
     return {'index': index}
 
 
-@label('bulk_add')
-@measure
+@profile.label('bulk_add')
+@profile.measure
 def bulk_index(index: nmslib.dist.FloatIndex, dataset: np.ndarray):
     index.addDataPointBatch(data=dataset)
     return {}
 
 
-@label('create_index')
-@measure
+@profile.label('create_index')
+@profile.measure
 def create_index(index: nmslib.dist.FloatIndex,
                  service_config: nmslib_parser.NmslibConfig):
     index.createIndex({
@@ -33,8 +33,8 @@ def create_index(index: nmslib.dist.FloatIndex,
     return {}
 
 
-@label('query_index')
-@measure
+@profile.label('query_index')
+@profile.measure
 def query_index(index: nmslib.dist.FloatIndex, vector: np.ndarray, k: int):
     ids, distances = index.knnQuery(vector, k=k)
     return {'ids': ids, 'distances': distances}

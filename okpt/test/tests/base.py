@@ -4,14 +4,15 @@ from okpt.io.config.parsers import tool
 
 
 def _aggregate_steps(steps: List[Dict[str, Any]]):
-    results = {'took': {'total': 0}}
+    results = {'took_total': 0}
     for step in steps:
         label, took = (step['label'], step['took'])
-        results['took']['total'] += took
-        if label in results['took']:
-            results['took'][label] += took
+        results['took_total'] += took
+        took_label = f'took_{label}'
+        if took_label in results:
+            results[took_label] += took
         else:
-            results['took'][label] = took
+            results[took_label] = took
 
     return results
 
