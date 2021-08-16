@@ -3,16 +3,23 @@ from typing import Any, Dict, List
 from okpt.io.config.parsers import tool
 
 
-def _aggregate_steps(steps: List[Dict[str, Any]]):
+def _aggregate_steps(steps: List[Dict[str, Any]], measures=['took']):
     results = {'took_total': 0}
     for step in steps:
-        label, took = (step['label'], step['took'])
-        results['took_total'] += took
-        took_label = f'took_{label}'
-        if took_label in results:
-            results[took_label] += took
-        else:
-            results[took_label] = took
+        label = step['label']
+        for measure in measures:
+            if measure in step:
+                measure_label = f'{measure}_{label}'
+                measure_total_label = f'{measure}_total'
+                if not measure_total_label in results:
+                    results[measure_total_label] = 0
+
+                step_measure = step[measure]
+                results[measure_total_label] += step_measure
+                if measure_label in results:
+                    results[measure_label] += step_measure
+                else:
+                    results[measure_label] = step_measure
 
     return results
 
