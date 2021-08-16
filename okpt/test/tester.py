@@ -1,17 +1,17 @@
 from okpt.io.config.parsers.base import ConfigurationError
 from okpt.io.config.parsers.tool import ToolConfig
-from okpt.test import test
+from okpt.test.tests import base, nmslib, opensearch
 
 
 def _get_test(test_id: int):
     if test_id == 1:
-        return test.OpenSearchIndexTest
+        return opensearch.OpenSearchIndexTest
     elif test_id == 2:
-        return test.OpenSearchQueryTest
+        return opensearch.OpenSearchQueryTest
     elif test_id == 3:
-        return test.NmslibIndexTest
+        return nmslib.NmslibIndexTest
     elif test_id == 4:
-        return test.NmslibQueryTest
+        return nmslib.NmslibQueryTest
     else:
         raise ConfigurationError(message='Invalid test_id.')
 

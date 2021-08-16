@@ -1,49 +1,12 @@
-from typing import Any, Dict, List
-
 from elasticsearch import Elasticsearch, RequestsHttpConnection
+from okpt.io.config.parsers import opensearch as opensearch_parser
 from okpt.io.config.parsers import tool
-from okpt.io.config.parsers.nmslib import NmslibConfig
-from okpt.io.config.parsers.opensearch import OpenSearchConfig
-from okpt.test import nmslib, opensearch
+from okpt.test.steps import opensearch
+from okpt.test.tests import base
 
 
-def _aggregate_steps(steps: List[Dict[str, Any]]):
-    results = {'took': {'total': 0}}
-    for step in steps:
-        label, took = (step['label'], step['took'])
-        results['took']['total'] += took
-        if label in results['took']:
-            results['took'][label] += took
-        else:
-            results['took'][label] = took
-
-    return results
-
-
-class Test():
-    def __init__(self, service_config, dataset: tool.Dataset):
-        self.service_config = service_config
-        self.dataset = dataset
-        self.bulk_size = 5000
-        self.step_results = []
-
-    def setup(self):
-        pass
-
-    def run_steps(self):
-        pass
-
-    def cleanup(self):
-        pass
-
-    def execute(self):
-        self.run_steps()
-        self.cleanup()
-        return _aggregate_steps(self.step_results)
-
-
-class OpenSearchTest(Test):
-    def __init__(self, service_config: OpenSearchConfig,
+class OpenSearchTest(base.Test):
+    def __init__(self, service_config: opensearch_parser.OpenSearchConfig,
                  dataset: tool.Dataset):
         super().__init__(service_config, dataset)
 
@@ -54,7 +17,8 @@ class OpenSearchTest(Test):
         }],
                                 use_ssl=False,
                                 verify_certs=False,
-                                connection_class=RequestsHttpConnection)
+                                connection_class=RequestsHttpConnection,
+                                timeout=60)
 
     def setup(self):
         body = {
@@ -67,7 +31,7 @@ class OpenSearchTest(Test):
 
 
 class OpenSearchIndexTest(OpenSearchTest):
-    def __init__(self, service_config: OpenSearchConfig,
+    def __init__(self, service_config: opensearch_parser.OpenSearchConfig,
                  dataset: tool.Dataset):
         super().__init__(service_config, dataset)
 
@@ -93,7 +57,7 @@ class OpenSearchIndexTest(OpenSearchTest):
 
 
 class OpenSearchQueryTest(OpenSearchTest):
-    def __init__(self, service_config: OpenSearchConfig,
+    def __init__(self, service_config: opensearch_parser.OpenSearchConfig,
                  dataset: tool.Dataset):
         super().__init__(service_config, dataset)
 
@@ -102,12 +66,12 @@ class OpenSearchQueryTest(OpenSearchTest):
     def setup(self):
         super().setup()
 
-        # split training set into sections for bulk ingestion
         self.sections = opensearch.bulk_transform_vectors(
             self.dataset.train, self.action, self.bulk_size)
         opensearch.create_index(self.es, self.index_name,
                                 self.service_config.index_spec)
         opensearch.bulk_index(self.es, self.index_name, self.sections)
+        opensearch.refresh_index(self.es, self.index_name)
 
     def run_steps(self):
         for vec in self.dataset.test:
@@ -130,42 +94,3 @@ class OpenSearchQueryTest(OpenSearchTest):
 
     def cleanup(self):
         opensearch.delete_index(es=self.es, index_name=self.index_name)
-
-
-class NmslibIndexTest(Test):
-    def __init__(self, service_config: NmslibConfig, dataset: tool.Dataset):
-        super().__init__(service_config, dataset)
-
-        self.dataset = dataset
-
-    def run_steps(self):
-        result = nmslib.init_index(service_config=self.service_config)
-        self.index = result['index']
-        self.step_results += [
-            result,
-            nmslib.bulk_index(index=self.index, dataset=self.dataset.train[:]),
-            nmslib.create_index(index=self.index,
-                                service_config=self.service_config)
-        ]
-
-
-class NmslibQueryTest(Test):
-    def __init__(self, service_config: NmslibConfig, dataset: tool.Dataset):
-        super().__init__(service_config, dataset)
-
-        self.dataset = dataset
-
-    def setup(self):
-        result = nmslib.init_index(service_config=self.service_config)
-        self.index = result['index']
-        nmslib.bulk_index(index=self.index, dataset=self.dataset.train[:])
-        nmslib.create_index(index=self.index,
-                            service_config=self.service_config)
-
-    def run_steps(self):
-        self.index.setQueryTimeParams(
-            {'efSearch': self.service_config.method.parameters.ef_search})
-        for vec in self.dataset.train:
-            k = 10
-            result = nmslib.query_index(index=self.index, vector=vec, k=k)
-            self.step_results.append(result)

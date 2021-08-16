@@ -41,7 +41,7 @@ class ToolConfig:
     test_id: int
     knn_service: str
     service_config: Union[OpenSearchConfig, NmslibConfig]
-    dataset: Union[h5py.File, Dict[str, Any]]
+    dataset: h5py.File
     dataset_format: str
     test_parameters: TestParameters
 
