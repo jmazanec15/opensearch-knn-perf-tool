@@ -2,12 +2,12 @@ import dataclasses
 import platform
 import sys
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import psutil
 from okpt.io.config.parsers.base import ConfigurationError
 from okpt.io.config.parsers.tool import ToolConfig
-from okpt.test.tests import base, nmslib, opensearch
+from okpt.test.tests import nmslib, opensearch
 
 
 def _get_test(test_id: int):
@@ -23,7 +23,7 @@ def _get_test(test_id: int):
         raise ConfigurationError(message='Invalid test_id.')
 
 
-def _aggregate_tests(results: Dict[Any, Any], num_runs: int):
+def _aggregate_tests(results: List[Dict[Any, Any]], num_runs: int):
     aggregate = {}
     for result in results:
         for key in result:
@@ -64,14 +64,16 @@ class Tester():
         return {**metadata, **obj}
 
     def execute(self):
-        results = []
+        runs = []
         for i in range(self.tool_config.test_parameters.num_runs):
             self.test = self.Test(
                 service_config=self.tool_config.service_config,
                 dataset=self.tool_config.dataset)
             self.test.setup()
-            results.append(self.test.execute())
-        aggregate = _aggregate_tests(results,
+            run = self.test.execute()
+            runs.append(run)
+
+        aggregate = _aggregate_tests(runs,
                                      self.tool_config.test_parameters.num_runs)
         full_result = self._add_metadata({
             'aggregate':
@@ -79,4 +81,6 @@ class Tester():
             'test_parameters':
             dataclasses.asdict(self.tool_config.test_parameters)
         })
+        if self.tool_config.test_parameters.show_runs:
+            full_result['runs'] = runs
         return full_result

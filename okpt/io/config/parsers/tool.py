@@ -33,6 +33,7 @@ from okpt.io.utils import reader
 @dataclass
 class TestParameters:
     num_runs: int
+    show_runs: bool
 
 
 @dataclass
@@ -94,6 +95,6 @@ class ToolParser(base.BaseParser):
             dataset=dataset,
             dataset_format=config_obj['dataset_format'],
             test_parameters=TestParameters(
-                config_obj['test_parameters']['num_runs']),
-        )
+                config_obj['test_parameters']['num_runs'],
+                config_obj['test_parameters']['show_runs']))
         return tool_config
