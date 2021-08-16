@@ -6,7 +6,7 @@ import nmslib
 
 
 @profile.label('init_index')
-@profile.measure
+@profile.took
 def init_index(service_config: nmslib_parser.NmslibConfig):
     index = nmslib.init(method=service_config.method.name,
                         space=service_config.method.space_type)
@@ -14,14 +14,14 @@ def init_index(service_config: nmslib_parser.NmslibConfig):
 
 
 @profile.label('bulk_add')
-@profile.measure
+@profile.took
 def bulk_index(index: nmslib.dist.FloatIndex, dataset: np.ndarray):
     index.addDataPointBatch(data=dataset)
     return {}
 
 
 @profile.label('create_index')
-@profile.measure
+@profile.took
 def create_index(index: nmslib.dist.FloatIndex,
                  service_config: nmslib_parser.NmslibConfig):
     index.createIndex({
@@ -34,7 +34,7 @@ def create_index(index: nmslib.dist.FloatIndex,
 
 
 @profile.label('query_index')
-@profile.measure
+@profile.took
 def query_index(index: nmslib.dist.FloatIndex, vector: np.ndarray, k: int):
     ids, distances = index.knnQuery(vector, k=k)
     return {'ids': ids, 'distances': distances}

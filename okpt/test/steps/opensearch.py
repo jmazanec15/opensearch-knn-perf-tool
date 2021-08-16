@@ -24,14 +24,14 @@ def bulk_transform_vectors(dataset: h5py.Dataset, action: Dict[str, Any],
 
 
 @profile.label('create_index')
-@profile.measure
+@profile.took
 def create_index(es: elasticsearch.Elasticsearch, index_name: str,
                  index_spec: Dict[str, Any]):
     return es.indices.create(index=index_name, body=index_spec)
 
 
 @profile.label('disable_refresh')
-@profile.measure
+@profile.took
 def disable_refresh(es: elasticsearch.Elasticsearch):
     return es.indices.put_settings(body={'index': {'refresh_interval': -1}})
 
@@ -50,7 +50,7 @@ def bulk_index(es: elasticsearch.Elasticsearch, index_name: str,
 
 
 @profile.label('refresh_index')
-@profile.measure
+@profile.took
 def refresh_index(es: elasticsearch.Elasticsearch, index_name: str):
     return es.indices.refresh(index=index_name)
 

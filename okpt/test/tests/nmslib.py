@@ -16,8 +16,7 @@ class NmslibIndexTest(base.Test):
         self.index = result['index']
         self.step_results += [
             result,
-            nmslib.bulk_index(index=self.index,
-                              dataset=self.dataset.train[:20]),
+            nmslib.bulk_index(index=self.index, dataset=self.dataset.train[:]),
             nmslib.create_index(index=self.index,
                                 service_config=self.service_config)
         ]

@@ -1,6 +1,8 @@
 import time
 from typing import Callable, Dict
 
+import psutil
+
 
 class Timer():
     def __init__(self):
@@ -13,7 +15,18 @@ class Timer():
         return (time.perf_counter() - self.start_time) * 1000
 
 
-def measure(f: Callable[..., Dict]):
+def memory(f: Callable[..., Dict]):
+    def wrapper(*args, **kwargs):
+        svmem = psutil.virtual_memory()
+        used_memory_start = svmem.used
+        result = f(*args, **kwargs)
+        used_memory_end = svmem.used
+        return {**result, 'memory': used_memory_end - used_memory_start}
+
+    return wrapper
+
+
+def took(f: Callable[..., Dict]):
     def wrapper(*args, **kwargs):
         timer = Timer()
         timer.start()
@@ -31,5 +44,4 @@ def label(name: str):
             return {**result, 'label': name}
 
         return wrapper
-
     return label_decorator
