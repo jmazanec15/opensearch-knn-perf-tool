@@ -70,7 +70,7 @@ def _aggregate_tests(results: List[Dict[Any, Any]], num_runs: int):
     return aggregate
 
 
-class Tester():
+class TestRunner():
     """Test runner class for running tests and aggregating the results.
 
     Methods:

@@ -23,7 +23,7 @@ import sys
 from okpt.io import args
 from okpt.io.config.parsers import base, tool
 from okpt.io.utils.writer import write_json
-from okpt.test.tester import Tester
+from okpt.test import runner
 
 
 def main():
@@ -41,8 +41,8 @@ def main():
             tool_config = parser.parse(cli_args.config)
             logging.info('Configs are valid.')
 
-            test = Tester(tool_config=tool_config)
-            test_result = test.execute()
+            test_runner = runner.TestRunner(tool_config=tool_config)
+            test_result = test_runner.execute()
             logging.info(json.dumps(test_result, indent=2))
             write_json(data=test_result, file=output)
         except base.ConfigurationError as e:
