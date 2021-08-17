@@ -48,7 +48,19 @@ def _get_test(test_id: int):
         raise base.ConfigurationError(message='Invalid test_id.')
 
 
-def _aggregate_tests(results: List[Dict[Any, Any]], num_runs: int):
+def _get_avg(values: List[Any]):
+    """Get average value of a list.
+
+    Args:
+        values: A list of values.
+
+    Returns:
+        The average value in the list.
+    """
+    return sum(values) / len(values)
+
+
+def _aggregate_runs(runs: List[Dict[Any, Any]]):
     """Aggregates and averages a list of test results.
 
     Args:
@@ -59,14 +71,14 @@ def _aggregate_tests(results: List[Dict[Any, Any]], num_runs: int):
         A dictionary containing the averages of the test results.
     """
     aggregate: Dict[str, Any] = {}
-    for result in results:
-        for key in result:
+    for run in runs:
+        for key, value in run.items():
             if key in aggregate:
-                aggregate[key] += result[key]
+                aggregate[key].append(value)
             else:
-                aggregate[key] = result[key]
+                aggregate[key] = [value]
 
-    aggregate = {key: value / num_runs for key, value in aggregate.items()}
+    aggregate = {key: _get_avg(value) for key, value in aggregate.items()}
     return aggregate
 
 
@@ -118,11 +130,10 @@ class TestRunner():
             run = self.test.execute()
             runs.append(run)
 
-        aggregate = _aggregate_tests(runs,
-                                     self.tool_config.test_parameters.num_runs)
+        aggregate = _aggregate_runs(runs)
 
         # add metadata to test results
-        full_result = {
+        tool_result = {
             **self._get_metadata(), 'aggregate': aggregate,
             'test_parameters':
             dataclasses.asdict(self.tool_config.test_parameters)
@@ -130,6 +141,6 @@ class TestRunner():
 
         # include info about all test runs if specified in config
         if self.tool_config.test_parameters.show_runs:
-            full_result['runs'] = runs
+            tool_result['runs'] = runs
 
-        return full_result
+        return tool_result
