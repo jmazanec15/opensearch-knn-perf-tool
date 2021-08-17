@@ -25,7 +25,7 @@ class NmslibIndexTest(base.Test):
         """See base class. Initializes index, bulk indexes vectors, and creates the index."""
         result = nmslib.init_index(service_config=self.service_config)
         self.index = result['index']
-        self.step_results += [
+        self.step_results = [
             result,
             nmslib.bulk_index(index=self.index, dataset=self.dataset.train),
             nmslib.create_index(index=self.index,
@@ -42,12 +42,12 @@ class NmslibQueryTest(base.Test):
         nmslib.bulk_index(index=self.index, dataset=self.dataset.train)
         nmslib.create_index(index=self.index,
                             service_config=self.service_config)
+        self.index.setQueryTimeParams(
+            {'efSearch': self.service_config.method.parameters.ef_search})
 
     def _run_steps(self):
         """See base class. Queries vectors against an NMSLIB index."""
-        self.index.setQueryTimeParams(
-            {'efSearch': self.service_config.method.parameters.ef_search})
-        for vec in self.dataset.test:
-            k = 10
-            result = nmslib.query_index(index=self.index, vector=vec, k=k)
-            self.step_results.append(result)
+        self.step_results = [
+            *nmslib.batch_query_index(
+                index=self.index, dataset=self.dataset.test, k=10)
+        ]

@@ -19,10 +19,11 @@
 Some of the OpenSearch operations return a `took` field in the response body,
 so the profiling decorators aren't needed for some functions.
 """
-from typing import Any, Dict, Iterable
+from typing import Any, Dict, Iterable, List
 
 import elasticsearch
 import numpy as np
+
 from okpt.test import profile
 
 
@@ -169,3 +170,33 @@ def query_index(es: elasticsearch.Elasticsearch, index_name: str,
         An OpenSearch query response body.
     """
     return es.search(index=index_name, body=body)
+
+
+def batch_query_index(es: elasticsearch.Elasticsearch, index_name: str,
+                      dataset: np.ndarray, k: int) -> List[Dict[str, Any]]:
+    """Queries an array of vectors against an OpenSearch index.
+
+    Args:
+        es: An OpenSearch client.
+        index_name: Name of the OpenSearch index to be searched against.
+        dataset: Array of vectors to query.
+        k: Number of neighbors to search for.
+
+    Returns:
+        A list of `query_index` responses.
+    """
+    get_body = lambda vec, k: {
+        'size': k,
+        'query': {
+            'knn': {
+                'test_vector': {
+                    'vector': vec,
+                    'k': k
+                }
+            }
+        }
+    }
+    return [
+        query_index(es=es, index_name=index_name, body=get_body(v, k))
+        for v in dataset
+    ]

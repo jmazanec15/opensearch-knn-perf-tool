@@ -20,6 +20,8 @@ The profiling decorators require the wrapped functions to return an dictionary,
 so the functions in this module may return a blank dictionary in order to be
 profiled.
 """
+from typing import Any, Dict, List
+
 import nmslib
 import numpy as np
 
@@ -97,3 +99,18 @@ def query_index(index: nmslib.dist.FloatIndex, vector: np.ndarray, k: int):
     """
     ids, distances = index.knnQuery(vector, k=k)
     return {'ids': ids, 'distances': distances}
+
+
+def batch_query_index(index: nmslib.dist.FloatIndex, dataset: np.ndarray,
+                      k: int) -> List[Dict[str, Any]]:
+    """Runs a group of queries against an NMSLIB index.
+
+    Args:
+        index: An NMSLIB index.
+        dataset: An array of vectors to query for.
+        k: Number of neighbors to search for.
+
+    Returns:
+        A list of `query_index` responses.
+    """
+    return [query_index(index=index, vector=v, k=k) for v in dataset]

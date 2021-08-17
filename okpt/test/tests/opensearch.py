@@ -16,6 +16,7 @@
 # under the License.
 """Provides OpenSearch Test classes."""
 from elasticsearch import Elasticsearch, RequestsHttpConnection
+
 from okpt.io.config.parsers import opensearch as opensearch_parser
 from okpt.io.config.parsers import tool
 from okpt.test.steps import opensearch
@@ -63,7 +64,7 @@ class OpenSearchIndexTest(OpenSearchTest):
     """See base class. Test class for indexing against OpenSearch."""
     def _run_steps(self):
         """See base class. Creates index, bulk indexes vectors, and refreshes the index."""
-        self.step_results += [
+        self.step_results = [
             opensearch.create_index(self.es, self.index_name,
                                     self.service_config.index_spec),
             *opensearch.bulk_index(self.es, self.index_name, self.partitions),
@@ -84,20 +85,9 @@ class OpenSearchQueryTest(OpenSearchTest):
 
     def _run_steps(self):
         """See base class. Queries vectors against an OpenSearch index."""
-        for vec in self.dataset.test:
-            k = 10
-            body = {
-                'size': 10,
-                'query': {
-                    'knn': {
-                        'test_vector': {
-                            'vector': vec,
-                            'k': k
-                        }
-                    }
-                }
-            }
-            result = opensearch.query_index(es=self.es,
-                                            index_name=self.index_name,
-                                            body=body)
-            self.step_results.append(result)
+        self.step_results = [
+            *opensearch.batch_query_index(es=self.es,
+                                          index_name=self.index_name,
+                                          dataset=self.dataset.test,
+                                          k=10)
+        ]
