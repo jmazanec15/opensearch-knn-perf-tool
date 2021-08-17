@@ -16,15 +16,15 @@
 # under the License.
 """Provides steps for NMSLIB tests.
 
-The profiling decorators require the wrapped functions to return an dictionary, 
+The profiling decorators require the wrapped functions to return an dictionary,
 so the functions in this module may return a blank dictionary in order to be
 profiled.
 """
+import nmslib
 import numpy as np
+
 from okpt.io.config.parsers import nmslib as nmslib_parser
 from okpt.test import profile
-
-import nmslib
 
 
 @profile.label('init_index')

@@ -25,9 +25,9 @@ Exceptions:
 
 import os
 from io import TextIOWrapper
-from typing import Any, Dict
 
 import cerberus
+
 from okpt.io.utils import reader
 
 

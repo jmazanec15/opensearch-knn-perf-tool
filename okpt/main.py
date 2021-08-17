@@ -21,8 +21,7 @@ import logging
 import sys
 
 from okpt.io import args
-from okpt.io.config.parsers import tool
-from okpt.io.config.parsers.base import ConfigurationError
+from okpt.io.config.parsers import base, tool
 from okpt.io.utils.writer import write_json
 from okpt.test.tester import Tester
 
@@ -46,7 +45,7 @@ def main():
             test_result = test.execute()
             logging.info(json.dumps(test_result, indent=2))
             write_json(data=test_result, file=output)
-        except ConfigurationError as e:
+        except base.ConfigurationError as e:
             logging.error(e.message)
             sys.exit(1)
 

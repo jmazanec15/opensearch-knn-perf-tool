@@ -21,7 +21,7 @@ from typing import Any, Dict, List
 from okpt.io.config.parsers import tool
 
 
-def _pX(values: List[Any], p: float):
+def _pxx(values: List[Any], p: float):
     """Calculates the pXX statistics for a given list.
 
     Args:
@@ -48,10 +48,10 @@ def _aggregate_steps(steps: List[Dict[str, Any]], measures=['took']):
     """Aggregates the steps for a given Test.
 
     The aggregation process extracts the measures from each step and calculates
-    the total time spent performing each step measure, including the 
+    the total time spent performing each step measure, including the
     percentile metrics, if possible.
 
-    A step measure is formatted as `{step_name}_{measure_name}`, for example, 
+    A step measure is formatted as `{step_name}_{measure_name}`, for example,
     {bulk_index}_{took} or {query_index}_{memory}. The braces are not included
     in the actual key string.
 
@@ -60,9 +60,9 @@ def _aggregate_steps(steps: List[Dict[str, Any]], measures=['took']):
         measures: List of step metrics to account for.
 
     Returns:
-        A complete test result. 
+        A complete test result.
     """
-    step_measure_labels = {}
+    step_measure_labels: Dict[str, Any] = {}
 
     # iterate over all test steps
     for step in steps:
@@ -87,9 +87,9 @@ def _aggregate_steps(steps: List[Dict[str, Any]], measures=['took']):
     for step_measure_label, step_measures in step_measure_labels.items():
         step_measures.sort()
         aggregate[step_measure_label + '_total'] = sum(step_measures)
-        aggregate[step_measure_label + '_p50'] = _pX(step_measures, 0.50)
-        aggregate[step_measure_label + '_p90'] = _pX(step_measures, 0.90)
-        aggregate[step_measure_label + '_p99'] = _pX(step_measures, 0.99)
+        aggregate[step_measure_label + '_p50'] = _pxx(step_measures, 0.50)
+        aggregate[step_measure_label + '_p90'] = _pxx(step_measures, 0.90)
+        aggregate[step_measure_label + '_p99'] = _pxx(step_measures, 0.99)
 
     return aggregate
 
@@ -113,7 +113,7 @@ class Test():
         self.service_config = service_config
         self.dataset = dataset
         self.bulk_size = 5000
-        self.step_results = []
+        self.step_results: List[Dict[str, Any]] = []
 
     def setup(self):
         pass

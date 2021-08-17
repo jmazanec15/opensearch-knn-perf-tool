@@ -29,7 +29,7 @@ from okpt.test import profile
 def bulk_partition_vectors(dataset: np.ndarray, split_size: int):
     """Partitions an array of vectors into sections for bulk ingestion.
 
-    Partitions are formed by taking the first `n` vectors, then the next `n`, 
+    Partitions are formed by taking the first `n` vectors, then the next `n`,
     and so on, until all the vectors have been assigned a partition group. The
     last partition group may have less than `n` vectors.
 

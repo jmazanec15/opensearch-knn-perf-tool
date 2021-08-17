@@ -32,18 +32,18 @@ _readable_file_type = argparse.FileType('r')
 _writable_file_type = argparse.FileType('w')
 
 
-def _add_config_path_arg(parser, name, help_msg="Path of configuration file."):
+def _add_config_path_arg(parser, name, help_msg='Path of configuration file.'):
     """"Add configuration file path argument."""
     parser.add_argument(name, type=_readable_file_type, help=help_msg)
 
 
-def _add_output_path_arg(parser, name, help_msg="Path of output file."):
+def _add_output_path_arg(parser, name, help_msg='Path of output file.'):
     """"Add output file path argument."""
     parser.add_argument(name, type=_writable_file_type, help=help_msg)
 
 
 # TODO: add custom nargs for 2 or more args instead of 1
-def _add_results_paths_arg(parser, name, help_msg="Paths of results files."):
+def _add_results_paths_arg(parser, name, help_msg='Paths of results files.'):
     """"Add results files paths argument."""
     parser.add_argument(name,
                         type=_writable_file_type,
@@ -108,8 +108,8 @@ def get_args() -> ToolArgs:
         A dict containing the command line args.
     """
     args = _parser.parse_args()
-    args = ToolArgs(log=args.log,
-                    command=args.command,
-                    config=args.config_path,
-                    output=args.output_path)
-    return args
+    tool_args = ToolArgs(log=args.log,
+                         command=args.command,
+                         config=args.config_path,
+                         output=args.output_path)
+    return tool_args

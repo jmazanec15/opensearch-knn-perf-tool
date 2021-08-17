@@ -16,7 +16,7 @@
 # under the License.
 """Provides decorators to profile functions.
 
-The decorators work by adding a `measureable` (time, memory, etc) field to a 
+The decorators work by adding a `measureable` (time, memory, etc) field to a
 dictionary returned by the wrapped function. So the wrapped functions must
 return a dictionary in order to be profiled.
 """
@@ -42,7 +42,7 @@ class _Timer():
 
     def end(self) -> float:
         """Stops the timer.
-    
+
         Returns:
             The time elapsed in milliseconds.
         """
@@ -56,7 +56,7 @@ def memory(f: Callable[..., Dict]):
         f: Function to profile.
 
     Returns:
-        A function that wraps the passed in function and adds a memory field to 
+        A function that wraps the passed in function and adds a memory field to
         the return value.
     """
     def wrapper(*args, **kwargs):
@@ -77,7 +77,7 @@ def took(f: Callable[..., Dict]):
         f: Function to profile.
 
     Returns:
-        A function that wraps the passed in function and adds a time took field 
+        A function that wraps the passed in function and adds a time took field
         to the return value.
     """
     def wrapper(*args, **kwargs):
@@ -85,8 +85,8 @@ def took(f: Callable[..., Dict]):
         timer = _Timer()
         timer.start()
         result = f(*args, **kwargs)
-        took = timer.end()
-        return {**result, 'took': took}
+        time_took = timer.end()
+        return {**result, 'took': time_took}
 
     return wrapper
 
@@ -98,7 +98,7 @@ def label(name: str):
         name: Function label.
 
     Returns:
-        A function that wraps the passed in function and adds a label field 
+        A function that wraps the passed in function and adds a label field
         to the return value.
     """
     def label_decorator(f: Callable[..., Dict]):
