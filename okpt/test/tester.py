@@ -14,6 +14,7 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
+"""Provides a test runner class."""
 import dataclasses
 import platform
 import sys
@@ -27,6 +28,14 @@ from okpt.test.tests import nmslib, opensearch
 
 
 def _get_test(test_id: int):
+    """Returns the Test class matching the test_id.
+
+    Args:
+        test_id: ID of Test.
+
+    Returns:
+        The Test class matching the test_id.
+    """
     if test_id == 1:
         return opensearch.OpenSearchIndexTest
     elif test_id == 2:
@@ -40,6 +49,15 @@ def _get_test(test_id: int):
 
 
 def _aggregate_tests(results: List[Dict[Any, Any]], num_runs: int):
+    """Aggregates and averages a list of test results.
+
+    Args:
+        results: A list of test results.
+        num_runs: Number of times the tests were ran.
+
+    Returns:
+        A dictionary containing the averages of the test results.
+    """
     aggregate = {}
     for result in results:
         for key in result:
@@ -53,13 +71,20 @@ def _aggregate_tests(results: List[Dict[Any, Any]], num_runs: int):
 
 
 class Tester():
+    """Test runner class for running tests and aggregating the results.
+
+    Methods:
+        execute: Run the tests and aggregate the results.
+    """
     def __init__(self, tool_config: ToolConfig):
+        """"Initializes test state and chooses the appropriate Test."""
         self.tool_config = tool_config
         self.Test = _get_test(tool_config.test_id)
 
-    def _add_metadata(self, obj: Dict[Any, Any]):
+    def _get_metadata(self):
+        """"Retrieves the test metadata."""
         svmem = psutil.virtual_memory()
-        metadata = {
+        return {
             'test_name':
             self.tool_config.test_name,
             'test_id':
@@ -77,11 +102,15 @@ class Tester():
             str(svmem.used) + ' (used) / ' + str(svmem.available) +
             ' (available) / ' + str(svmem.total) + ' (total)',
         }
-        return {**metadata, **obj}
 
     def execute(self):
+        """Runs the tests and aggregates the results.
+
+        Returns:
+            A dictionary containing the aggregate of test results.
+        """
         runs = []
-        for i in range(self.tool_config.test_parameters.num_runs):
+        for _ in range(self.tool_config.test_parameters.num_runs):
             self.test = self.Test(
                 service_config=self.tool_config.service_config,
                 dataset=self.tool_config.dataset)
@@ -91,12 +120,16 @@ class Tester():
 
         aggregate = _aggregate_tests(runs,
                                      self.tool_config.test_parameters.num_runs)
-        full_result = self._add_metadata({
-            'aggregate':
-            aggregate,
+
+        # add metadata to test results
+        full_result = {
+            **self._get_metadata(), 'aggregate': aggregate,
             'test_parameters':
             dataclasses.asdict(self.tool_config.test_parameters)
-        })
+        }
+
+        # include info about all test runs if specified in config
         if self.tool_config.test_parameters.show_runs:
             full_result['runs'] = runs
+
         return full_result

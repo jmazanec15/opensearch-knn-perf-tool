@@ -14,6 +14,12 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
+"""Provides steps for NMSLIB tests.
+
+The profiling decorators require the wrapped functions to return an dictionary, 
+so the functions in this module may return a blank dictionary in order to be
+profiled.
+"""
 import numpy as np
 from okpt.io.config.parsers import nmslib as nmslib_parser
 from okpt.test import profile
@@ -24,6 +30,14 @@ import nmslib
 @profile.label('init_index')
 @profile.took
 def init_index(service_config: nmslib_parser.NmslibConfig):
+    """Initializes an NMSLIB index.
+
+    Args:
+        service_config: An NMSLIB config.
+
+    Returns:
+        An object with the new NMSLIB index.
+    """
     index = nmslib.init(method=service_config.method.name,
                         space=service_config.method.space_type)
     return {'index': index}
@@ -32,6 +46,15 @@ def init_index(service_config: nmslib_parser.NmslibConfig):
 @profile.label('bulk_add')
 @profile.took
 def bulk_index(index: nmslib.dist.FloatIndex, dataset: np.ndarray):
+    """Bulk indexes vectors into an NMSLIB index.
+
+    Args:
+        index: An NMSLIB index.
+        dataset: A numpy array of vectors to be indexed.
+
+    Returns:
+        A blank object (for profiling).
+    """
     index.addDataPointBatch(data=dataset)
     return {}
 
@@ -40,6 +63,15 @@ def bulk_index(index: nmslib.dist.FloatIndex, dataset: np.ndarray):
 @profile.took
 def create_index(index: nmslib.dist.FloatIndex,
                  service_config: nmslib_parser.NmslibConfig):
+    """Creates an NMSLIB index, making it available for querying.
+
+    Args:
+        index: An NMSLIB index.
+        service_config: An NMSLIB config.
+
+    Returns:
+        A blank object (for profiling).
+    """
     index.createIndex({
         'efConstruction': service_config.method.parameters.ef_construction,
         'M': service_config.method.parameters.M,
@@ -52,5 +84,16 @@ def create_index(index: nmslib.dist.FloatIndex,
 @profile.label('query_index')
 @profile.took
 def query_index(index: nmslib.dist.FloatIndex, vector: np.ndarray, k: int):
+    """Runs a single query against an NMSLIB index.
+
+    Args:
+        index: An NMSLIB index.
+        vector: A vector to query for.
+        k: Number of neighbors to search for.
+
+    Returns:
+        A dictionary containing the ids and distances of the query vector's
+        neighbors.
+    """
     ids, distances = index.knnQuery(vector, k=k)
     return {'ids': ids, 'distances': distances}

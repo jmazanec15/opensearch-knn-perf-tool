@@ -14,20 +14,15 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-from okpt.io.config.parsers import nmslib as nmslib_parser
-from okpt.io.config.parsers import tool
+"""Provides NMSLIB Test classes."""
 from okpt.test.steps import nmslib
 from okpt.test.tests import base
 
 
 class NmslibIndexTest(base.Test):
-    def __init__(self, service_config: nmslib_parser.NmslibConfig,
-                 dataset: tool.Dataset):
-        super().__init__(service_config, dataset)
-
-        self.dataset = dataset
-
-    def run_steps(self):
+    """See base class. Test class for indexing against NMSLIB."""
+    def _run_steps(self):
+        """See base class. Initializes index, bulk indexes vectors, and creates the index."""
         result = nmslib.init_index(service_config=self.service_config)
         self.index = result['index']
         self.step_results += [
@@ -39,20 +34,17 @@ class NmslibIndexTest(base.Test):
 
 
 class NmslibQueryTest(base.Test):
-    def __init__(self, service_config: nmslib_parser.NmslibConfig,
-                 dataset: tool.Dataset):
-        super().__init__(service_config, dataset)
-
-        self.dataset = dataset
-
+    """See base class. Test class for querying against NMSLIB."""
     def setup(self):
+        """See base class. Sets up an NMSLIB index."""
         result = nmslib.init_index(service_config=self.service_config)
         self.index = result['index']
         nmslib.bulk_index(index=self.index, dataset=self.dataset.train)
         nmslib.create_index(index=self.index,
                             service_config=self.service_config)
 
-    def run_steps(self):
+    def _run_steps(self):
+        """See base class. Queries vectors against an NMSLIB index."""
         self.index.setQueryTimeParams(
             {'efSearch': self.service_config.method.parameters.ef_search})
         for vec in self.dataset.test:

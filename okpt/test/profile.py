@@ -14,25 +14,53 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
+"""Provides decorators to profile functions.
+
+The decorators work by adding a `measureable` (time, memory, etc) field to a 
+dictionary returned by the wrapped function. So the wrapped functions must
+return a dictionary in order to be profiled.
+"""
 import time
 from typing import Callable, Dict
 
 import psutil
 
 
-class Timer():
+class _Timer():
+    """Timer class for timing.
+
+    Methods:
+        start: Starts the timer.
+        end: Stops the timer and returns the time elapsed since start.
+    """
     def __init__(self):
         self.start_time = time.perf_counter()
 
     def start(self):
+        """Starts the timer."""
         self.start_time = time.perf_counter()
 
     def end(self) -> float:
+        """Stops the timer.
+    
+        Returns:
+            The time elapsed in milliseconds.
+        """
         return (time.perf_counter() - self.start_time) * 1000
 
 
 def memory(f: Callable[..., Dict]):
+    """Profiles a functions memory usage.
+
+    Args:
+        f: Function to profile.
+
+    Returns:
+        A function that wraps the passed in function and adds a memory field to 
+        the return value.
+    """
     def wrapper(*args, **kwargs):
+        """Wrapper function."""
         svmem = psutil.virtual_memory()
         used_memory_start = svmem.used
         result = f(*args, **kwargs)
@@ -43,8 +71,18 @@ def memory(f: Callable[..., Dict]):
 
 
 def took(f: Callable[..., Dict]):
+    """Profiles a functions execution time.
+
+    Args:
+        f: Function to profile.
+
+    Returns:
+        A function that wraps the passed in function and adds a time took field 
+        to the return value.
+    """
     def wrapper(*args, **kwargs):
-        timer = Timer()
+        """Wrapper function."""
+        timer = _Timer()
         timer.start()
         result = f(*args, **kwargs)
         took = timer.end()
@@ -54,8 +92,23 @@ def took(f: Callable[..., Dict]):
 
 
 def label(name: str):
+    """Adds a label to a function's output.
+
+    Args:
+        name: Function label.
+
+    Returns:
+        A function that wraps the passed in function and adds a label field 
+        to the return value.
+    """
     def label_decorator(f: Callable[..., Dict]):
+        """Decorator function.
+
+        Args:
+            f: Function to label.
+        """
         def wrapper(*args, **kwargs):
+            """Wrapper function."""
             result = f(*args, **kwargs)
             return {**result, 'label': name}
 
