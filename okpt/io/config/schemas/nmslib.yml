@@ -16,7 +16,7 @@ method:
           type: integer
         ef_search:
           type: integer
-        M:
+        m:
           type: integer
         index_thread_qty:
           type: integer

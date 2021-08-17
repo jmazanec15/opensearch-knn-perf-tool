@@ -74,7 +74,7 @@ def create_index(index: nmslib.dist.FloatIndex,
     """
     index.createIndex({
         'efConstruction': service_config.method.parameters.ef_construction,
-        'M': service_config.method.parameters.M,
+        'M': service_config.method.parameters.m,
         'indexThreadQty': service_config.method.parameters.index_thread_qty,
         'post': service_config.method.parameters.post
     })

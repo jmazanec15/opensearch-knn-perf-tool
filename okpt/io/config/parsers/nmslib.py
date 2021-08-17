@@ -29,7 +29,7 @@ from okpt.io.config.parsers import base
 class MethodParametersConfig:
     ef_construction: int
     ef_search: int
-    M: int
+    m: int
     index_thread_qty: int
     post: int
 
@@ -66,7 +66,7 @@ class NmslibParser(base.BaseParser):
             parameters=MethodParametersConfig(
                 ef_construction=parameters_config['ef_construction'],
                 ef_search=parameters_config['ef_search'],
-                M=parameters_config['M'],
+                m=parameters_config['m'],
                 index_thread_qty=parameters_config['index_thread_qty'],
                 post=parameters_config['post'],
             )))

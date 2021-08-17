@@ -4,6 +4,6 @@ method:
   parameters:
     ef_construction: 100
     ef_search: 100
-    M: 5
+    m: 5
     index_thread_qty: 1
     post: 2
