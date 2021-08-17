@@ -44,16 +44,25 @@ def _pxx(values: List[Any], p: float):
         return values[floor(len(values) * p)]
 
 
-def _aggregate_steps(steps: List[Dict[str, Any]], measures=['took']):
+def _aggregate_steps(steps: List[Dict[str, Any]], measure_labels=['took']):
     """Aggregates the steps for a given Test.
 
     The aggregation process extracts the measures from each step and calculates
     the total time spent performing each step measure, including the
     percentile metrics, if possible.
 
+    The aggregation process also extracts the test measures by simply summing
+    up the respective step measures.
+
     A step measure is formatted as `{step_name}_{measure_name}`, for example,
     {bulk_index}_{took} or {query_index}_{memory}. The braces are not included
     in the actual key string.
+
+    Percentile/Total step measures are give as
+    `{step_name}_{measure_name}_{percentile|total}`.
+
+    Test measures are just step measure sums so they just given as
+    `test_{measure_name}`.
 
     Args:
         steps: List of test steps to be aggregated.
@@ -62,34 +71,38 @@ def _aggregate_steps(steps: List[Dict[str, Any]], measures=['took']):
     Returns:
         A complete test result.
     """
-    step_measure_labels: Dict[str, Any] = {}
+    test_measures = {
+        f'test_{measure_label}': 0
+        for measure_label in measure_labels
+    }
+    step_measures: Dict[str, Any] = {}
 
     # iterate over all test steps
     for step in steps:
         step_label = step['label']
 
         # iterate over all measures in each test step
-        for measure in measures:
+        for measure_label in measure_labels:
             # not all step results contain the same measures, so only include
             # possible measures
-            if measure in step:
-                step_measure = step[measure]
-                step_measure_label = f'{step_label}_{measure}'
+            if measure_label in step:
+                step_measure = step[measure_label]
+                step_measure_label = f'{step_label}_{measure_label}'
 
-                if step_measure_label in step_measure_labels:
-                    step_measure_labels[step_measure_label].append(
-                        step_measure)
+                test_measures[f'test_{measure_label}'] += step_measure
+                if step_measure_label in step_measures:
+                    step_measures[step_measure_label].append(step_measure)
                 else:
-                    step_measure_labels[step_measure_label] = [step_measure]
+                    step_measures[step_measure_label] = [step_measure]
 
-    aggregate = {}
+    aggregate = {**test_measures}
     # calculate the totals and percentile statistics for each step measure
-    for step_measure_label, step_measures in step_measure_labels.items():
-        step_measures.sort()
-        aggregate[step_measure_label + '_total'] = sum(step_measures)
-        aggregate[step_measure_label + '_p50'] = _pxx(step_measures, 0.50)
-        aggregate[step_measure_label + '_p90'] = _pxx(step_measures, 0.90)
-        aggregate[step_measure_label + '_p99'] = _pxx(step_measures, 0.99)
+    for step_measure_label, step_measure in step_measures.items():
+        step_measure.sort()
+        aggregate[step_measure_label + '_total'] = sum(step_measure)
+        aggregate[step_measure_label + '_p50'] = _pxx(step_measure, 0.50)
+        aggregate[step_measure_label + '_p90'] = _pxx(step_measure, 0.90)
+        aggregate[step_measure_label + '_p99'] = _pxx(step_measure, 0.99)
 
     return aggregate
 
