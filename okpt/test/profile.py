@@ -20,6 +20,7 @@ The decorators work by adding a `measureable` (time, memory, etc) field to a
 dictionary returned by the wrapped function. So the wrapped functions must
 return a dictionary in order to be profiled.
 """
+import functools
 import time
 from typing import Callable, Dict
 
@@ -59,6 +60,7 @@ def memory(f: Callable[..., Dict]):
         A function that wraps the passed in function and adds a memory field to
         the return value.
     """
+    @functools.wraps(f)
     def wrapper(*args, **kwargs):
         """Wrapper function."""
         svmem = psutil.virtual_memory()
@@ -80,6 +82,7 @@ def took(f: Callable[..., Dict]):
         A function that wraps the passed in function and adds a time took field
         to the return value.
     """
+    @functools.wraps(f)
     def wrapper(*args, **kwargs):
         """Wrapper function."""
         timer = _Timer()
@@ -107,6 +110,7 @@ def label(name: str):
         Args:
             f: Function to label.
         """
+        @functools.wraps(f)
         def wrapper(*args, **kwargs):
             """Wrapper function."""
             result = f(*args, **kwargs)
