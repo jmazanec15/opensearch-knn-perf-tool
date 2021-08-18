@@ -30,6 +30,11 @@ import psutil
 def step(f: Callable):
     """Decorates a function as a test step.
 
+    Because the functions to profile a step require a dictionary as the step
+    output, this function, besides semantically denoting a function as a step,
+    also wraps the step and forces the output to be an empty dictionary if
+    needed.
+
     Args:
         f: Function to decorate.
 
