@@ -1,4 +1,5 @@
 index_spec: config/opensearch/index-spec.json
 max_num_segments: 10
-index_thread: 1
-query_thread: 1
+index_thread_qty: 1
+bulk_size: 10000
+k: 10

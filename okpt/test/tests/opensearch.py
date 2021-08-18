@@ -46,14 +46,14 @@ class OpenSearchTest(base.Test):
         body = {
             'transient': {
                 'knn.algo_param.index_thread_qty':
-                self.service_config.index_thread
+                self.service_config.index_thread_qty
             }
         }
         self.es.cluster.put_settings(body=body)
 
         # split training set into sections for bulk ingestion
         self.partitions = opensearch.bulk_transform_vectors(
-            self.dataset.train, self.action, self.bulk_size)
+            self.dataset.train, self.action, self.service_config.bulk_size)
 
     def _cleanup(self):
         """See base class. Deletes the OpenSearch index."""
@@ -89,5 +89,5 @@ class OpenSearchQueryTest(OpenSearchTest):
             *opensearch.batch_query_index(es=self.es,
                                           index_name=self.index_name,
                                           dataset=self.dataset.test,
-                                          k=10)
+                                          k=self.service_config.k)
         ]

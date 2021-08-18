@@ -5,4 +5,4 @@ service_config: config/nmslib/service.yml
 dataset: dataset/data.hdf5
 dataset_format: hdf5
 test_parameters:
-  num_runs: 4
+  num_runs: 10

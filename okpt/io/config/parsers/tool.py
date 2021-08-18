@@ -25,6 +25,7 @@ from typing import Any, Dict, Union
 
 import h5py
 import numpy as np
+
 from okpt.io.config.parsers import base, utils
 from okpt.io.config.parsers.nmslib import NmslibConfig
 from okpt.io.config.parsers.opensearch import OpenSearchConfig
@@ -58,7 +59,7 @@ def _parse_dataset(dataset_path: str,
                    dataset_format: str) -> Union[Dataset, Dict[str, Any]]:
     if dataset_format == 'hdf5':
         file = h5py.File(dataset_path)
-        return Dataset(train=file['train'][:250], test=file['test'][:250])
+        return Dataset(train=file['train'][:], test=file['test'][:])
     elif dataset_format == 'json':
         # TODO: support nljson instead of json for opensearch ingestion
         return reader.parse_json_from_path(dataset_path)

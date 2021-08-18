@@ -28,10 +28,7 @@ from okpt.io.config.parsers import base
 @dataclass
 class MethodParametersConfig:
     ef_construction: int
-    ef_search: int
     m: int
-    index_thread_qty: int
-    post: int
 
 
 @dataclass
@@ -44,6 +41,10 @@ class MethodConfig:
 @dataclass
 class NmslibConfig:
     method: MethodConfig
+    ef_search: int
+    index_thread_qty: int
+    post: int
+    k: int
 
 
 class NmslibParser(base.BaseParser):
@@ -60,14 +61,17 @@ class NmslibParser(base.BaseParser):
         config = super().parse(file_obj)
         method_config = config['method']
         parameters_config = method_config['parameters']
-        nmslib_config = NmslibConfig(method=MethodConfig(
-            name=method_config['name'],
-            space_type=method_config['space_type'],
-            parameters=MethodParametersConfig(
-                ef_construction=parameters_config['ef_construction'],
-                ef_search=parameters_config['ef_search'],
-                m=parameters_config['m'],
-                index_thread_qty=parameters_config['index_thread_qty'],
-                post=parameters_config['post'],
-            )))
+        nmslib_config = NmslibConfig(
+            method=MethodConfig(
+                name=method_config['name'],
+                space_type=method_config['space_type'],
+                parameters=MethodParametersConfig(
+                    ef_construction=parameters_config['ef_construction'],
+                    m=parameters_config['m'],
+                )),
+            ef_search=config['ef_search'],
+            index_thread_qty=config['index_thread_qty'],
+            post=config['post'],
+            k=config['k'],
+        )
         return nmslib_config

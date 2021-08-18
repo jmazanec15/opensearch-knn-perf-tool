@@ -31,8 +31,9 @@ from okpt.io.utils import reader
 class OpenSearchConfig:
     index_spec: Dict[Any, Any]
     max_num_segments: int
-    index_thread: int
-    query_thread: int
+    index_thread_qty: int
+    bulk_size: int
+    k: int
 
 
 class OpenSearchParser(base.BaseParser):
@@ -52,7 +53,7 @@ class OpenSearchParser(base.BaseParser):
         opensearch_config = OpenSearchConfig(
             index_spec=index_spec_obj,
             max_num_segments=config_obj['max_num_segments'],
-            index_thread=config_obj['index_thread'],
-            query_thread=config_obj['query_thread'],
-        )
+            index_thread_qty=config_obj['index_thread_qty'],
+            bulk_size=config_obj['bulk_size'],
+            k=config_obj['k'])
         return opensearch_config

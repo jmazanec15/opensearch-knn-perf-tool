@@ -3,7 +3,8 @@ method:
   space_type: l2
   parameters:
     ef_construction: 100
-    ef_search: 100
     m: 5
-    index_thread_qty: 1
-    post: 2
+ef_search: 100
+index_thread_qty: 1
+post: 0
+k: 50

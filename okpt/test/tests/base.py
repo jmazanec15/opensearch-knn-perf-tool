@@ -125,7 +125,6 @@ class Test():
         """
         self.service_config = service_config
         self.dataset = dataset
-        self.bulk_size = 5000
         self.step_results: List[Dict[str, Any]] = []
 
     def setup(self):

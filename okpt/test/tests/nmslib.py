@@ -43,11 +43,12 @@ class NmslibQueryTest(base.Test):
         nmslib.create_index(index=self.index,
                             service_config=self.service_config)
         self.index.setQueryTimeParams(
-            {'efSearch': self.service_config.method.parameters.ef_search})
+            {'efSearch': self.service_config.ef_search})
 
     def _run_steps(self):
         """See base class. Queries vectors against an NMSLIB index."""
         self.step_results = [
-            *nmslib.batch_query_index(
-                index=self.index, dataset=self.dataset.test, k=10)
+            *nmslib.batch_query_index(index=self.index,
+                                      dataset=self.dataset.test,
+                                      k=self.service_config.k)
         ]
