@@ -31,6 +31,7 @@ from okpt.test import profile
 
 @profile.label('init_index')
 @profile.took
+@profile.step
 def init_index(service_config: nmslib_parser.NmslibConfig):
     """Initializes an NMSLIB index.
 
@@ -47,6 +48,7 @@ def init_index(service_config: nmslib_parser.NmslibConfig):
 
 @profile.label('bulk_add')
 @profile.took
+@profile.step
 def bulk_index(index: nmslib.dist.FloatIndex, dataset: np.ndarray):
     """Bulk indexes vectors into an NMSLIB index.
 
@@ -58,11 +60,11 @@ def bulk_index(index: nmslib.dist.FloatIndex, dataset: np.ndarray):
         A blank object (for profiling).
     """
     index.addDataPointBatch(data=dataset)
-    return {}
 
 
 @profile.label('create_index')
 @profile.took
+@profile.step
 def create_index(index: nmslib.dist.FloatIndex,
                  service_config: nmslib_parser.NmslibConfig):
     """Creates an NMSLIB index, making it available for querying.
@@ -80,11 +82,11 @@ def create_index(index: nmslib.dist.FloatIndex,
         'indexThreadQty': service_config.index_thread_qty,
         'post': service_config.post
     })
-    return {}
 
 
 @profile.label('query_index')
 @profile.took
+@profile.step
 def query_index(index: nmslib.dist.FloatIndex, vector: np.ndarray, k: int):
     """Runs a single query against an NMSLIB index.
 

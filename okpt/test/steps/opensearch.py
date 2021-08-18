@@ -76,6 +76,7 @@ def bulk_transform_vectors(dataset: np.ndarray, action: Dict[str, Any],
 
 @profile.label('create_index')
 @profile.took
+@profile.step
 def create_index(es: elasticsearch.Elasticsearch, index_name: str,
                  index_spec: Dict[str, Any]):
     """Creates an OpenSearch index, applying the index settings/mappings.
@@ -93,6 +94,7 @@ def create_index(es: elasticsearch.Elasticsearch, index_name: str,
 
 @profile.label('disable_refresh')
 @profile.took
+@profile.step
 def disable_refresh(es: elasticsearch.Elasticsearch):
     """Disables the refresh interval for an OpenSearch index.
 
@@ -103,6 +105,12 @@ def disable_refresh(es: elasticsearch.Elasticsearch):
         An OpenSearch index settings update response body.
     """
     return es.indices.put_settings(body={'index': {'refresh_interval': -1}})
+
+
+@profile.label('bulk_add')
+@profile.step
+def bulk(es: elasticsearch.Elasticsearch, index_name: str, body):
+    return es.bulk(index=index_name, body=body)
 
 
 def bulk_index(es: elasticsearch.Elasticsearch, index_name: str,
@@ -117,19 +125,16 @@ def bulk_index(es: elasticsearch.Elasticsearch, index_name: str,
     Returns:
         An array of bulk injection responses.
     """
-    @profile.label('bulk_add')
-    def bulk(index, body):
-        return es.bulk(index=index, body=body)
-
     results = []
     for partition in partitions:
-        result = bulk(index_name, partition)
+        result = bulk(es=es, index_name=index_name, body=partition)
         results.append(result)
     return results
 
 
 @profile.label('refresh_index')
 @profile.took
+@profile.step
 def refresh_index(es: elasticsearch.Elasticsearch, index_name: str):
     """Refreshes an OpenSearch index, making it available for searching.
 
@@ -157,6 +162,7 @@ def delete_index(es: elasticsearch.Elasticsearch, index_name: str):
 
 
 @profile.label('query_index')
+@profile.step
 def query_index(es: elasticsearch.Elasticsearch, index_name: str,
                 body: Dict[str, Any]):
     """Queries a vector against an OpenSearch index.

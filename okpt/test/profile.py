@@ -27,6 +27,27 @@ from typing import Callable, Dict
 import psutil
 
 
+def step(f: Callable):
+    """Decorates a function as a test step.
+
+    Args:
+        f: Function to decorate.
+
+    Returns:
+        If the output of the passed in function is a dictionary, it returns that
+        output. Otherwise, it returns an empty dictionary.
+    """
+    @functools.wraps(f)
+    def wrapper(*args, **kwargs):
+        result = f(*args, **kwargs)
+        if isinstance(result, dict):
+            return result
+        else:
+            return {}
+
+    return wrapper
+
+
 class _Timer():
     """Timer class for timing.
 
