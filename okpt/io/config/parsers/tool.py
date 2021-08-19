@@ -39,20 +39,20 @@ class TestParameters:
 
 
 @dataclass
+class Dataset:
+    train: np.ndarray
+    test: np.ndarray
+
+
+@dataclass
 class ToolConfig:
     test_name: str
     test_id: int
     knn_service: str
     service_config: Union[OpenSearchConfig, NmslibConfig]
-    dataset: h5py.File
+    dataset: Dataset
     dataset_format: str
     test_parameters: TestParameters
-
-
-@dataclass
-class Dataset:
-    train: np.ndarray
-    test: np.ndarray
 
 
 def _parse_dataset(dataset_path: str,
