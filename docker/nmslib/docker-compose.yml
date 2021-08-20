@@ -25,4 +25,5 @@ services:
     image: "${IMAGE_NAME:-okpt/nmslib}"
     volumes:
       - ./config:/home/test/config
+      - ./dataset:/home/test/dataset
       - ./output:/home/test/output

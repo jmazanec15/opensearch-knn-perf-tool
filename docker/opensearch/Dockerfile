@@ -30,7 +30,6 @@ WORKDIR /home/test
 ADD --chown=test requirements.txt .
 RUN pip3 install -r requirements.txt --user
 ADD --chown=test okpt okpt
-ADD --chown=test dataset dataset
 ADD --chown=test scripts scripts
 ADD --chown=test knn-perf-tool.py .
 RUN chmod -R u+x scripts
