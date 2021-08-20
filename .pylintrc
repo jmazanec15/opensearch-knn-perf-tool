@@ -7,7 +7,7 @@
 
 [MASTER]
 
-fail-under=0.9
+fail-under=9.0
 
 # Files or directories to be skipped. They should be base names, not paths.
 ignore=third_party
