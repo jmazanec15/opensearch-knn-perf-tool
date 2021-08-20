@@ -42,6 +42,7 @@ def step(f: Callable):
         If the output of the passed in function is a dictionary, it returns that
         output. Otherwise, it returns an empty dictionary.
     """
+
     @functools.wraps(f)
     def wrapper(*args, **kwargs):
         result = f(*args, **kwargs)
@@ -53,15 +54,27 @@ def step(f: Callable):
     return wrapper
 
 
+class TimerStoppedWithoutStartingError(Exception):
+    """Error raised when Timer is stopped without having been started."""
+
+    def __init__(self):
+        super().__init__()
+        self.message = 'Timer must call start() before calling end().'
+
+
 class _Timer():
     """Timer class for timing.
 
     Methods:
         start: Starts the timer.
         end: Stops the timer and returns the time elapsed since start.
+
+    Raises:
+        TimerStoppedWithoutStartingError: Timer must start before ending.
     """
+
     def __init__(self):
-        self.start_time = time.perf_counter()
+        self.start_time = None
 
     def start(self):
         """Starts the timer."""
@@ -73,7 +86,13 @@ class _Timer():
         Returns:
             The time elapsed in milliseconds.
         """
-        return (time.perf_counter() - self.start_time) * 1000
+        # ensure timer has started before ending
+        if self.start_time == None:
+            raise TimerStoppedWithoutStartingError()
+
+        elapsed = time.perf_counter() - self.start_time * 1000
+        self.start_time = None
+        return elapsed
 
 
 def memory(f: Callable[..., Dict]):
@@ -86,6 +105,7 @@ def memory(f: Callable[..., Dict]):
         A function that wraps the passed in function and adds a memory field to
         the return value.
     """
+
     @functools.wraps(f)
     def wrapper(*args, **kwargs):
         """Wrapper function."""
@@ -108,10 +128,12 @@ def took(f: Callable[..., Dict]):
         A function that wraps the passed in function and adds a time took field
         to the return value.
     """
+
     @functools.wraps(f)
     def wrapper(*args, **kwargs):
         """Wrapper function."""
         timer = _Timer()
+        timer.end()
         timer.start()
         result = f(*args, **kwargs)
         time_took = timer.end()
@@ -130,12 +152,14 @@ def label(name: str):
         A function that wraps the passed in function and adds a label field
         to the return value.
     """
+
     def label_decorator(f: Callable[..., Dict]):
         """Decorator function.
 
         Args:
             f: Function to label.
         """
+
         @functools.wraps(f)
         def wrapper(*args, **kwargs):
             """Wrapper function."""
@@ -143,4 +167,5 @@ def label(name: str):
             return {**result, 'label': name}
 
         return wrapper
+
     return label_decorator
