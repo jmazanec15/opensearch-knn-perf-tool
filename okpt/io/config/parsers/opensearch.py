@@ -29,7 +29,7 @@ from okpt.io.utils import reader
 
 @dataclass
 class OpenSearchConfig:
-    index_spec: Dict[Any, Any]
+    index_spec: Dict[str, Any]
     max_num_segments: int
     index_thread_qty: int
     bulk_size: int

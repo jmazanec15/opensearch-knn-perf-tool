@@ -60,7 +60,7 @@ def _get_avg(values: List[Any]):
     return sum(values) / len(values)
 
 
-def _aggregate_runs(runs: List[Dict[Any, Any]]):
+def _aggregate_runs(runs: List[Dict[str, Any]]):
     """Aggregates and averages a list of test results.
 
     Args:
