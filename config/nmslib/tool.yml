@@ -1,5 +1,5 @@
 test_name: nmslib_test
-test_id: 3
+test_id: nmslib_index
 knn_service: nmslib
 service_config: config/nmslib/service.yml
 dataset: dataset/data.hdf5

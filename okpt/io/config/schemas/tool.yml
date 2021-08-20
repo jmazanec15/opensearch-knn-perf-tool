@@ -4,7 +4,7 @@
 test_name:
   type: string
 test_id:
-  type: number
+  type: string
 knn_service:
   type: string
   allowed: [opensearch, nmslib]

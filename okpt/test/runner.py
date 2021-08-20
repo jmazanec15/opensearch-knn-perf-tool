@@ -23,29 +23,8 @@ from typing import Any, Dict, List
 
 import psutil
 
-from okpt.io.config.parsers import base, tool
-from okpt.test.tests import nmslib, opensearch
-
-
-def _get_test(test_id: int):
-    """Returns the Test class matching the test_id.
-
-    Args:
-        test_id: ID of Test.
-
-    Returns:
-        The Test class matching the test_id.
-    """
-    if test_id == 1:
-        return opensearch.OpenSearchIndexTest
-    elif test_id == 2:
-        return opensearch.OpenSearchQueryTest
-    elif test_id == 3:
-        return nmslib.NmslibIndexTest
-    elif test_id == 4:
-        return nmslib.NmslibQueryTest
-    else:
-        raise base.ConfigurationError(message='Invalid test_id.')
+from okpt.io.config.parsers import tool
+from okpt.test.tests import factory
 
 
 def _get_avg(values: List[Any]):
@@ -88,31 +67,32 @@ class TestRunner():
     Methods:
         execute: Run the tests and aggregate the results.
     """
+
     def __init__(self, tool_config: tool.ToolConfig):
         """"Initializes test state and chooses the appropriate Test."""
         self.tool_config = tool_config
-        self.test_class = _get_test(tool_config.test_id)
+        self.test = factory.TestFactory(self.tool_config)
 
     def _get_metadata(self):
         """"Retrieves the test metadata."""
         svmem = psutil.virtual_memory()
         return {
             'test_name':
-            self.tool_config.test_name,
+                self.tool_config.test_name,
             'test_id':
-            self.tool_config.test_id,
+                self.tool_config.test_id,
             'date':
-            datetime.now().strftime('%m/%d/%Y %H:%M:%S'),
+                datetime.now().strftime('%m/%d/%Y %H:%M:%S'),
             'python_version':
-            sys.version,
+                sys.version,
             'os_version':
-            platform.platform(),
+                platform.platform(),
             'processor':
-            platform.processor() + ', ' + str(psutil.cpu_count(logical=True)) +
-            ' cores',
+                platform.processor() + ', ' +
+                str(psutil.cpu_count(logical=True)) + ' cores',
             'memory':
-            str(svmem.used) + ' (used) / ' + str(svmem.available) +
-            ' (available) / ' + str(svmem.total) + ' (total)',
+                str(svmem.used) + ' (used) / ' + str(svmem.available) +
+                ' (available) / ' + str(svmem.total) + ' (total)',
         }
 
     def execute(self):
@@ -123,9 +103,6 @@ class TestRunner():
         """
         runs = []
         for _ in range(self.tool_config.test_parameters.num_runs):
-            self.test = self.test_class(
-                service_config=self.tool_config.service_config,
-                dataset=self.tool_config.dataset)
             self.test.setup()
             run = self.test.execute()
             runs.append(run)
@@ -134,9 +111,10 @@ class TestRunner():
 
         # add metadata to test results
         tool_result = {
-            **self._get_metadata(), 'aggregate': aggregate,
+            **self._get_metadata(), 'aggregate':
+                aggregate,
             'test_parameters':
-            dataclasses.asdict(self.tool_config.test_parameters)
+                dataclasses.asdict(self.tool_config.test_parameters)
         }
 
         # include info about all test runs if specified in config

@@ -47,7 +47,7 @@ class Dataset:
 @dataclass
 class ToolConfig:
     test_name: str
-    test_id: int
+    test_id: str
     knn_service: str
     service_config: Union[OpenSearchConfig, NmslibConfig]
     dataset: Dataset
