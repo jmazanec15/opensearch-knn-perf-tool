@@ -101,12 +101,11 @@ class TestRunner():
         Returns:
             A dictionary containing the aggregate of test results.
         """
-        runs = []
-        for _ in range(self.tool_config.test_parameters.num_runs):
-            self.test.setup()
-            run = self.test.execute()
-            runs.append(run)
-
+        self.test.setup()
+        runs = [
+            self.test.execute()
+            for _ in range(self.tool_config.test_parameters.num_runs)
+        ]
         aggregate = _aggregate_runs(runs)
 
         # add metadata to test results

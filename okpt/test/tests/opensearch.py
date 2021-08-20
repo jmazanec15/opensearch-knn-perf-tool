@@ -91,3 +91,6 @@ class OpenSearchQueryTest(OpenSearchTest):
                                           dataset=self.dataset.test,
                                           k=self.service_config.k)
         ]
+
+    def _cleanup(self):
+        pass
