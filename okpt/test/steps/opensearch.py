@@ -19,59 +19,13 @@
 Some of the OpenSearch operations return a `took` field in the response body,
 so the profiling decorators aren't needed for some functions.
 """
-from typing import Any, Dict, Iterable, List
+from typing import Any, Dict, List
 
 import elasticsearch
+import h5py
 import numpy as np
 
 from okpt.test import profile
-
-
-def bulk_partition_vectors(dataset: np.ndarray, split_size: int):
-    """Partitions an array of vectors into sections for bulk ingestion.
-
-    Partitions are formed by taking the first `n` vectors, then the next `n`,
-    and so on, until all the vectors have been assigned a partition group. The
-    last partition group may have less than `n` vectors.
-
-    Args:
-        dataset: Array of vectors to partition.
-        split_size: Size of each partition.
-
-    Returns:
-        An array of vector partitions.
-    """
-    splits = list(range(split_size, len(dataset), split_size))
-    return np.split(dataset[:], splits)
-
-
-def bulk_transform_vectors(dataset: np.ndarray, action: Dict[str, Any],
-                           bulk_size: int):
-    """Partitions and transforms a list of vectors into OpenSearch's bulk injection format.
-
-    Args:
-        dataset: An array of vectors to partition and transform.
-        action: The bulk action for each vector.
-        bulk_size: Number of vectors in a single bulk request.
-    Returns:
-        An array of partitioned and transformed vectors in bulk format.
-    """
-    def bulk_transform(section: np.ndarray):
-        """Helper function to transform vectors.
-
-        Args:
-            section: An array of vectors to transform.
-
-        Returns:
-            An array of transformed vectors in bulk format.
-        """
-        actions = [action, None] * len(section)
-        actions[1::2] = [{'test_vector': vec} for vec in section.tolist()]
-        return actions
-
-    partitions = bulk_partition_vectors(dataset, bulk_size)
-    partitions = map(bulk_transform, partitions)
-    return partitions
 
 
 @profile.label('create_index')
@@ -107,28 +61,61 @@ def disable_refresh(es: elasticsearch.Elasticsearch):
     return es.indices.put_settings(body={'index': {'refresh_interval': -1}})
 
 
+def bulk_transform(partition: np.ndarray,
+                   action=Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Partitions and transforms a list of vectors into OpenSearch's bulk injection format.
+
+    Args:
+        section: An array of vectors to transform.
+        action: Bulk API action
+
+    Returns:
+        An array of transformed vectors in bulk format.
+    """
+    actions = [action, None] * len(partition)
+    actions[1::2] = [{'test_vector': vec} for vec in partition.tolist()]
+    return actions
+
+
 @profile.label('bulk_add')
 @profile.step
 def bulk(es: elasticsearch.Elasticsearch, index_name: str, body):
+    """Make bulk request to Elasticsearch.
+
+    Args:
+        es: An OpenSearch client.
+        index_name: Name of Elasticsearch index
+        body: Bulk request body
+
+    Returns:
+        Elasticsearch bulk response body.
+    """
     return es.bulk(index=index_name, body=body)
 
 
 def bulk_index(es: elasticsearch.Elasticsearch, index_name: str,
-               partitions: Iterable[np.ndarray]):
-    """Creates an OpenSearch index, applying the index settings/mappings.
+               dataset: h5py.Dataset, bulk_size: int):
+    """Bulk indexes vectors into an Elasticsearch index.
 
     Args:
         es: An OpenSearch client.
-        index_name: Name of the OpenSearch index to be indexed against.
-        partitions: An array of vector partitions to be indexed.
+        index_name: Name of the OpenSearch index to ingest vectors into.
+        dataset: Dataset of vectors to bulk ingest.
+        bulk_size: Number of vectors in one bulk request.
 
     Returns:
         An array of bulk injection responses.
     """
     results = []
-    for partition in partitions:
-        result = bulk(es=es, index_name=index_name, body=partition)
+    action = {'index': {'_index': index_name}}
+    i = 0
+    while i < dataset.len():
+        partition = dataset[i:i + bulk_size]
+        body = bulk_transform(partition, action)
+        result = bulk(es=es, index_name=index_name, body=body)
         results.append(result)
+        i += bulk_size
+
     return results
 
 
@@ -179,7 +166,7 @@ def query_index(es: elasticsearch.Elasticsearch, index_name: str,
 
 
 def batch_query_index(es: elasticsearch.Elasticsearch, index_name: str,
-                      dataset: np.ndarray, k: int) -> List[Dict[str, Any]]:
+                      dataset: h5py.Dataset, k: int) -> List[Dict[str, Any]]:
     """Queries an array of vectors against an OpenSearch index.
 
     Args:

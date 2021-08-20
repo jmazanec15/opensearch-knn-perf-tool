@@ -40,8 +40,8 @@ class TestParameters:
 
 @dataclass
 class Dataset:
-    train: np.ndarray
-    test: np.ndarray
+    train: h5py.Dataset
+    test: h5py.Dataset
 
 
 @dataclass
@@ -59,7 +59,7 @@ def _parse_dataset(dataset_path: str,
                    dataset_format: str) -> Union[Dataset, Dict[str, Any]]:
     if dataset_format == 'hdf5':
         file = h5py.File(dataset_path)
-        return Dataset(train=file['train'][:], test=file['test'][:])
+        return Dataset(train=file['train'], test=file['test'])
     elif dataset_format == 'json':
         # TODO: support nljson instead of json for opensearch ingestion
         return reader.parse_json_from_path(dataset_path)
@@ -73,6 +73,7 @@ class ToolParser(base.BaseParser):
     Methods:
         parse: Parse and validate the Tool config.
     """
+
     def __init__(self):
         super().__init__('tool')
 

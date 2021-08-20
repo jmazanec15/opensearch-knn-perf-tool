@@ -25,13 +25,13 @@ from okpt.test.tests import base
 
 class OpenSearchTest(base.Test):
     """See base class. Base OpenSearch Test class."""
+
     def __init__(self, service_config: opensearch_parser.OpenSearchConfig,
                  dataset: tool.Dataset):
         """See base class. Initializes the OpenSearch client."""
         super().__init__(service_config, dataset)
 
         self.index_name = 'test_index'
-        self.action = {'index': {'_index': self.index_name}}
         self.es = Elasticsearch(hosts=[{
             'host': 'localhost',
             'port': 9200
@@ -46,14 +46,10 @@ class OpenSearchTest(base.Test):
         body = {
             'transient': {
                 'knn.algo_param.index_thread_qty':
-                self.service_config.index_thread_qty
+                    self.service_config.index_thread_qty
             }
         }
         self.es.cluster.put_settings(body=body)
-
-        # split training set into sections for bulk ingestion
-        self.partitions = opensearch.bulk_transform_vectors(
-            self.dataset.train, self.action, self.service_config.bulk_size)
 
     def _cleanup(self):
         """See base class. Deletes the OpenSearch index."""
@@ -62,25 +58,29 @@ class OpenSearchTest(base.Test):
 
 class OpenSearchIndexTest(OpenSearchTest):
     """See base class. Test class for indexing against OpenSearch."""
+
     def _run_steps(self):
         """See base class. Creates index, bulk indexes vectors, and refreshes the index."""
         self.step_results = [
             opensearch.create_index(self.es, self.index_name,
                                     self.service_config.index_spec),
-            *opensearch.bulk_index(self.es, self.index_name, self.partitions),
+            *opensearch.bulk_index(self.es, self.index_name, self.dataset.train,
+                                   self.service_config.bulk_size),
             opensearch.refresh_index(self.es, self.index_name)
         ]
 
 
 class OpenSearchQueryTest(OpenSearchTest):
     """See base class. Test class for querying against OpenSearch."""
+
     def setup(self):
         """See base class. Sets up an OpenSearch index."""
         super().setup()
 
         opensearch.create_index(self.es, self.index_name,
                                 self.service_config.index_spec)
-        opensearch.bulk_index(self.es, self.index_name, self.partitions)
+        opensearch.bulk_index(self.es, self.index_name, self.dataset.train,
+                              self.service_config.bulk_size)
         opensearch.refresh_index(self.es, self.index_name)
 
     def _run_steps(self):
