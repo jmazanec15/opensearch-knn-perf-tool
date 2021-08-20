@@ -133,7 +133,6 @@ def took(f: Callable[..., Dict]):
     def wrapper(*args, **kwargs):
         """Wrapper function."""
         timer = _Timer()
-        timer.end()
         timer.start()
         result = f(*args, **kwargs)
         time_took = timer.end()
