@@ -16,23 +16,23 @@ method:
           type: integer
           min: 100
           max: 2000
+        ef_search:
+          type: integer
+          min: 100
+          max: 2000
         m:
           type: integer
           min: 5
           max: 100
-ef_search:
-  type: integer
-  min: 100
-  max: 2000
+        post:
+          type: integer
+          min: 0
+          max: 2
+          default: 0
 index_thread_qty:
   type: integer
   min: 1
   max: 10
-post:
-  type: integer
-  min: 0
-  max: 2
-  default: 0
 k:
   type: integer
   min: 1
