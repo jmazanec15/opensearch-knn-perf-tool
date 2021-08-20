@@ -90,7 +90,7 @@ class _Timer():
         if self.start_time == None:
             raise TimerStoppedWithoutStartingError()
 
-        elapsed = time.perf_counter() - self.start_time * 1000
+        elapsed = (time.perf_counter() - self.start_time) * 1000
         self.start_time = None
         return elapsed
 
