@@ -32,14 +32,16 @@ class OpenSearchTest(base.Test):
         super().__init__(service_config, dataset)
 
         self.index_name = 'test_index'
-        self.es = Elasticsearch(hosts=[{
-            'host': 'localhost',
-            'port': 9200
-        }],
-                                use_ssl=False,
-                                verify_certs=False,
-                                connection_class=RequestsHttpConnection,
-                                timeout=60)
+        self.es = Elasticsearch(
+            hosts=[{
+                'host': 'localhost',
+                'port': 9200
+            }],
+            use_ssl=False,
+            verify_certs=False,
+            connection_class=RequestsHttpConnection,
+            timeout=60,
+        )
 
     def setup(self):
         """See base class. Initializes cluster settings and transforms dataset in bulk ingestion format."""
