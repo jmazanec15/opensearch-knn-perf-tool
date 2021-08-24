@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the NOTICE file
 # distributed with this work for additional information
@@ -14,11 +15,10 @@
 # KIND, either express or implied.  See the License for the
 # specific language governing permissions and limitations
 # under the License.
-#!/usr/bin/env bash
 
 # start opensearch
 export OPENSEARCH_JAVA_OPTS="-Xms512m -Xmx512m" # minimum and maximum Java heap size, recommend setting both to 50% of system RAM
-su opensearch -c '/usr/share/opensearch/opensearch-docker-entrypoint.sh' > output/opensearch.log &
+su opensearch -c '/usr/share/opensearch/opensearch-docker-entrypoint.sh' >output/opensearch.log &
 
 # ping opensearch to see if it has started yet
 # if it hasn't, wait 10 seconds and try again
@@ -38,8 +38,4 @@ while [[ $e != "200" ]]; do
 done
 
 # run testing tool
-if [[ -z $OKPT_LOG_LEVEL ]]; then
-  su test -c "python3 knn-perf-tool.py $OKPT_COMMAND $OKPT_CONFIG_PATH $OKPT_OUTPUT_PATH"
-else
-  su test -c "python3 knn-perf-tool.py --log $OKPT_LOG_LEVEL $OKPT_COMMAND $OKPT_CONFIG_PATH $OKPT_OUTPUT_PATH"
-fi
+su test -c "python3 knn-perf-tool.py --log $OKPT_LOG_LEVEL $OKPT_COMMAND $OKPT_CONFIG_PATH $OKPT_OUTPUT_PATH"

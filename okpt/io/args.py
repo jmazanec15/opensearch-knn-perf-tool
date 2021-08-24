@@ -81,7 +81,8 @@ def define_args():
     _parser.add_argument(
         '--log',
         type=str,
-        choices=['debug', 'info', 'warning', 'error', 'critical'])
+        choices=['debug', 'info', 'warning', 'error', 'critical'],
+        default='info')
     subparsers = _parser.add_subparsers(title='commands',
                                         dest='command',
                                         help='sub-command help')

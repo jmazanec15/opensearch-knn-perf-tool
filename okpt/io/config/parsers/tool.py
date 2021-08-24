@@ -21,10 +21,9 @@ Classes:
 """
 from dataclasses import dataclass
 from io import TextIOWrapper
-from typing import Any, Dict, Union
+from typing import Union, cast
 
 import h5py
-import numpy as np
 
 from okpt.io.config.parsers import base, utils
 from okpt.io.config.parsers.nmslib import NmslibConfig
@@ -55,14 +54,11 @@ class ToolConfig:
     test_parameters: TestParameters
 
 
-def _parse_dataset(dataset_path: str,
-                   dataset_format: str) -> Union[Dataset, Dict[str, Any]]:
+def _parse_dataset(dataset_path: str, dataset_format: str) -> Union[Dataset]:
     if dataset_format == 'hdf5':
         file = h5py.File(dataset_path)
-        return Dataset(train=file['train'], test=file['test'])
-    elif dataset_format == 'json':
-        # TODO: support nljson instead of json for opensearch ingestion
-        return reader.parse_json_from_path(dataset_path)
+        return Dataset(train=cast(h5py.Dataset, file['train']),
+                       test=cast(h5py.Dataset, file['test']))
     else:
         raise Exception()
 
