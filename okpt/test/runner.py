@@ -16,6 +16,7 @@
 # under the License.
 """Provides a test runner class."""
 import dataclasses
+import logging
 import platform
 import sys
 from datetime import datetime
@@ -101,11 +102,17 @@ class TestRunner():
         Returns:
             A dictionary containing the aggregate of test results.
         """
+        logging.info('Setting up tests.')
         self.test.setup()
-        runs = [
-            self.test.execute()
-            for _ in range(self.tool_config.test_parameters.num_runs)
-        ]
+        logging.info('Beginning to run tests.')
+        runs = []
+        for i in range(self.tool_config.test_parameters.num_runs):
+            logging.info(
+                f'Running test {i + 1} of {self.tool_config.test_parameters.num_runs}'
+            )
+            runs.append(self.test.execute())
+
+        logging.info('Finished running tests.')
         aggregate = _aggregate_runs(runs)
 
         # add metadata to test results
