@@ -96,26 +96,3 @@ def took(f: Callable):
         return {'took': time_took}
 
     return wrapper
-
-
-def memory(f: Callable[..., Dict]):
-    """Profiles a functions memory usage.
-
-    Args:
-        f: Function to profile.
-
-    Returns:
-        A function that wraps the passed in function and adds a memory field to
-        the return value.
-    """
-
-    @functools.wraps(f)
-    def wrapper(*args, **kwargs):
-        """Wrapper function."""
-        svmem = psutil.virtual_memory()
-        used_memory_start = svmem.used
-        result = f(*args, **kwargs)
-        used_memory_end = svmem.used
-        return {**result, 'memory': used_memory_end - used_memory_start}
-
-    return wrapper
