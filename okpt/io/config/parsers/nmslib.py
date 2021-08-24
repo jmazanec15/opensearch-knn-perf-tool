@@ -19,10 +19,32 @@
 Classes:
     NmslibParser: NMSLIB config parser.
 """
+from dataclasses import dataclass
 from io import TextIOWrapper
-from typing import Any, Dict
 
 from okpt.io.config.parsers import base
+
+
+@dataclass
+class MethodParametersConfig:
+    ef_construction: int
+    ef_search: int
+    post: int
+    m: int
+
+
+@dataclass
+class MethodConfig:
+    name: str
+    space_type: str  # not in `parameters` to match OpenSearch config
+    parameters: MethodParametersConfig
+
+
+@dataclass
+class NmslibConfig:
+    method: MethodConfig
+    index_thread_qty: int
+    k: int
 
 
 class NmslibParser(base.BaseParser):
@@ -31,10 +53,26 @@ class NmslibParser(base.BaseParser):
     Methods:
         parse: Parse and validate the NMSLIB config.
     """
+
     def __init__(self):
         super().__init__('nmslib')
 
-    def parse(self, file_obj: TextIOWrapper) -> Dict[str, Any]:
+    def parse(self, file_obj: TextIOWrapper) -> NmslibConfig:
         """See base class."""
-        config_obj = super().parse(file_obj)
-        return config_obj
+        config = super().parse(file_obj)
+        method_config = config['method']
+        parameters_config = method_config['parameters']
+        nmslib_config = NmslibConfig(
+            method=MethodConfig(
+                name=method_config['name'],
+                space_type=method_config['space_type'],
+                parameters=MethodParametersConfig(
+                    ef_construction=parameters_config['ef_construction'],
+                    ef_search=parameters_config['ef_search'],
+                    m=parameters_config['m'],
+                    post=parameters_config['post'],
+                )),
+            index_thread_qty=config['index_thread_qty'],
+            k=config['k'],
+        )
+        return nmslib_config

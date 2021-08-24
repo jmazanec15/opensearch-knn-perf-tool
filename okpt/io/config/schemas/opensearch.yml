@@ -7,11 +7,15 @@ max_num_segments:
   type: integer
   min: 1
   max: 10
-index_thread:
+index_thread_qty:
   type: integer
   min: 1
   max: 10
-query_thread:
+bulk_size:
   type: integer
   min: 1
-  max: 10
+  max: 10000
+k:
+  type: integer
+  min: 1
+  max: 10000

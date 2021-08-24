@@ -16,32 +16,35 @@
 # under the License.
 """ Runner script that serves as the main controller of the testing tool."""
 
+import json
 import logging
 import sys
 
-from elasticsearch import Elasticsearch
-
 from okpt.io import args
 from okpt.io.config.parsers import base, tool
-from okpt.io.utils import writer
+from okpt.io.utils.writer import write_json
+from okpt.test import runner
 
 
 def main():
     """Main function of entry module."""
     args.define_args()
     cli_args = args.get_args()
+    output = cli_args.output
+    if cli_args.log:
+        log_level = getattr(logging, cli_args.log.upper())
+        logging.basicConfig(level=log_level)
 
     if cli_args.command == 'test':
         try:
             parser = tool.ToolParser()
-            tool_config = parser.parse(cli_args.config_path)
-            logging.debug(tool_config)
-            logging.debug('configs are valid.')
+            tool_config = parser.parse(cli_args.config)
+            logging.info('Configs are valid.')
 
-            # TODO: replace configs with test results output
-            output_file_path = cli_args.output_path
-            writer.write_json(tool_config, output_file_path)
-            logging.debug('data written to `%s`', output_file_path.name)
+            test_runner = runner.TestRunner(tool_config=tool_config)
+            test_result = test_runner.execute()
+            logging.debug(f'Test Result:\n {json.dumps(test_result, indent=2)}')
+            write_json(data=test_result, file=output)
         except base.ConfigurationError as e:
             logging.error(e.message)
             sys.exit(1)

@@ -19,11 +19,48 @@
 Classes:
     ToolParser: Tool config parser.
 """
+from dataclasses import dataclass
 from io import TextIOWrapper
-from typing import Any, Dict
+from typing import Union, cast
+
+import h5py
 
 from okpt.io.config.parsers import base, utils
+from okpt.io.config.parsers.nmslib import NmslibConfig
+from okpt.io.config.parsers.opensearch import OpenSearchConfig
 from okpt.io.utils import reader
+
+
+@dataclass
+class TestParameters:
+    num_runs: int
+    show_runs: bool
+
+
+@dataclass
+class Dataset:
+    train: h5py.Dataset
+    test: h5py.Dataset
+
+
+@dataclass
+class ToolConfig:
+    test_name: str
+    test_id: str
+    knn_service: str
+    service_config: Union[OpenSearchConfig, NmslibConfig]
+    dataset: Dataset
+    dataset_format: str
+    test_parameters: TestParameters
+
+
+def _parse_dataset(dataset_path: str, dataset_format: str) -> Union[Dataset]:
+    if dataset_format == 'hdf5':
+        file = h5py.File(dataset_path)
+        return Dataset(train=cast(h5py.Dataset, file['train']),
+                       test=cast(h5py.Dataset, file['test']))
+    else:
+        raise Exception()
 
 
 class ToolParser(base.BaseParser):
@@ -32,11 +69,13 @@ class ToolParser(base.BaseParser):
     Methods:
         parse: Parse and validate the Tool config.
     """
+
     def __init__(self):
         super().__init__('tool')
 
-    def parse(self, file_obj: TextIOWrapper) -> Dict[str, Any]:
+    def parse(self, file_obj: TextIOWrapper) -> ToolConfig:
         """See base class."""
+
         config_obj = super().parse(file_obj)
 
         # determine which knn_service is used
@@ -44,7 +83,17 @@ class ToolParser(base.BaseParser):
         service_config_path = config_obj['service_config']
         service_config_file_obj = reader.get_file_obj(service_config_path)
         config_parser = utils.get_parser(knn_service_name)
-        return {
-            **config_obj, 'service_config':
-            config_parser.parse(service_config_file_obj)
-        }
+
+        dataset = _parse_dataset(config_obj['dataset'],
+                                 config_obj['dataset_format'])
+        tool_config = ToolConfig(
+            test_name=config_obj['test_name'],
+            test_id=config_obj['test_id'],
+            knn_service=config_obj['knn_service'],
+            service_config=config_parser.parse(service_config_file_obj),
+            dataset=dataset,
+            dataset_format=config_obj['dataset_format'],
+            test_parameters=TestParameters(
+                config_obj['test_parameters']['num_runs'],
+                config_obj['test_parameters']['show_runs']))
+        return tool_config

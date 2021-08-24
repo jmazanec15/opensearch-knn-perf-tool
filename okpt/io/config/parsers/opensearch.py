@@ -19,11 +19,21 @@
 Classes:
     OpenSearchParser: OpenSearch config parser.
 """
+from dataclasses import dataclass
 from io import TextIOWrapper
 from typing import Any, Dict
 
 from okpt.io.config.parsers import base
 from okpt.io.utils import reader
+
+
+@dataclass
+class OpenSearchConfig:
+    index_spec: Dict[str, Any]
+    max_num_segments: int
+    index_thread_qty: int
+    bulk_size: int
+    k: int
 
 
 class OpenSearchParser(base.BaseParser):
@@ -35,9 +45,15 @@ class OpenSearchParser(base.BaseParser):
     def __init__(self):
         super().__init__('opensearch')
 
-    def parse(self, file_obj: TextIOWrapper) -> Dict[str, Any]:
+    def parse(self, file_obj: TextIOWrapper) -> OpenSearchConfig:
         """See base class."""
         config_obj = super().parse(file_obj)
         index_spec_path = config_obj['index_spec']
         index_spec_obj = reader.parse_json_from_path(index_spec_path)
-        return {**config_obj, 'index_spec': index_spec_obj}
+        opensearch_config = OpenSearchConfig(
+            index_spec=index_spec_obj,
+            max_num_segments=config_obj['max_num_segments'],
+            index_thread_qty=config_obj['index_thread_qty'],
+            bulk_size=config_obj['bulk_size'],
+            k=config_obj['k'])
+        return opensearch_config

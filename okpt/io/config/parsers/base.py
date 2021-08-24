@@ -25,7 +25,6 @@ Exceptions:
 
 import os
 from io import TextIOWrapper
-from typing import Any, Dict
 
 import cerberus
 
@@ -65,10 +64,11 @@ class BaseParser():
         schema_obj = reader.parse_yaml_from_path(schema_file_path)
         return cerberus.Validator(schema_obj)
 
-    def parse(self, file_obj: TextIOWrapper) -> Dict[str, Any]:
+    def parse(self, file_obj: TextIOWrapper):
         """Convert file object to dict, while validating against config schema."""
         config_obj = reader.parse_yaml(file_obj)
-        if not self.validator.validate(config_obj):
+        is_config_valid = self.validator.validate(config_obj)
+        if not is_config_valid:
             raise ConfigurationError(self.validator.errors)
 
-        return config_obj
+        return self.validator.document
