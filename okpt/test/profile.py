@@ -22,9 +22,7 @@ return a dictionary in order to be profiled.
 """
 import functools
 import time
-from typing import Callable, Dict
-
-import psutil
+from typing import Callable
 
 
 class TimerStoppedWithoutStartingError(Exception):
@@ -60,7 +58,7 @@ class _Timer():
             The time elapsed in milliseconds.
         """
         # ensure timer has started before ending
-        if self.start_time == None:
+        if self.start_time is None:
             raise TimerStoppedWithoutStartingError()
 
         elapsed = (time.perf_counter() - self.start_time) * 1000
