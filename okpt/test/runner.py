@@ -95,7 +95,7 @@ class TestRunner():
                 ' (available) / ' + str(svmem.total) + ' (total)',
         }
 
-    def execute(self):
+    def execute(self) -> Dict[str, Any]:
         """Runs the tests and aggregates the results.
 
         Returns:
