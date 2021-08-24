@@ -43,7 +43,7 @@ def main():
 
             test_runner = runner.TestRunner(tool_config=tool_config)
             test_result = test_runner.execute()
-            logging.info(json.dumps(test_result, indent=2))
+            logging.debug(f'Test Result:\n {json.dumps(test_result, indent=2)}')
             write_json(data=test_result, file=output)
         except base.ConfigurationError as e:
             logging.error(e.message)
