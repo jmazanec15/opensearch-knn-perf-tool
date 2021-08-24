@@ -19,56 +19,118 @@
 Some of the OpenSearch operations return a `took` field in the response body,
 so the profiling decorators aren't needed for some functions.
 """
-from typing import Any, Dict, List
+from okpt.test.steps import base
+from typing import Any, Dict, List, cast
 
 import elasticsearch
-import h5py
 import numpy as np
+import h5py
 
-from okpt.test import profile
 
+class CreateIndexStep(base.Step):
+    """See base class."""
 
-@profile.label('create_index')
-@profile.took
-@profile.step
-def create_index(es: elasticsearch.Elasticsearch, index_name: str,
+    label = 'create_index'
+    measures = ['took']
+
+    def __init__(self, es: elasticsearch.Elasticsearch, index_name: str,
                  index_spec: Dict[str, Any]):
-    """Creates an OpenSearch index, applying the index settings/mappings.
+        self.es = es
+        self.index_name = index_name
+        self.index_spec = index_spec
 
-    Args:
-        es: An OpenSearch client.
-        index_name: Name of the OpenSearch index.
-        index_spec: Dictionary containing the index settings/mappings.
+    def _action(self):
+        """Creates an OpenSearch index, applying the index settings/mappings.
 
-    Returns:
-        An OpenSearch index creation response body.
-    """
-    return es.indices.create(index=index_name, body=index_spec)
+        Returns:
+            An OpenSearch index creation response body.
+        """
+        return self.es.indices.create(index=self.index_name,
+                                      body=self.index_spec)
 
 
-@profile.label('disable_refresh')
-@profile.took
-@profile.step
-def disable_refresh(es: elasticsearch.Elasticsearch):
-    """Disables the refresh interval for an OpenSearch index.
+class DisableRefreshStep(base.Step):
+    """See base class."""
 
-    Args:
-        es: An OpenSearch client.
+    label = 'disable_refresh'
+    measures = ['took']
 
-    Returns:
-        An OpenSearch index settings update response body.
-    """
-    return es.indices.put_settings(body={'index': {'refresh_interval': -1}})
+    def __init__(self, es: elasticsearch.Elasticsearch):
+        self.es = es
+
+    def _action(self):
+        """Disables the refresh interval for an OpenSearch index.
+
+        Returns:
+            An OpenSearch index settings update response body.
+        """
+        return self.es.indices.put_settings(
+            body={'index': {
+                'refresh_interval': -1
+            }})
+
+
+class BulkStep(base.Step):
+    """See base class."""
+
+    label = 'bulk_add'
+    measures = ['took']
+
+    def __init__(self, es: elasticsearch.Elasticsearch, index_name: str, body):
+        self.es = es
+        self.index_name = index_name
+        self.body = body
+
+    def _action(self):
+        """Make bulk request to OpenSearch.
+
+        Returns:
+            An OpenSearch bulk response body.
+        """
+        return self.es.bulk(index=self.index_name, body=self.body)
+
+
+class RefreshIndexStep(base.Step):
+    """See base class."""
+
+    label = 'refresh_index'
+    measures = ['took']
+
+    def __init__(self, es: elasticsearch.Elasticsearch, index_name: str):
+        self.es = es
+        self.index_name = index_name
+
+    def _action(self):
+        return self.es.indices.refresh(index=self.index_name)
+
+
+class QueryIndexStep(base.Step):
+    """See base class."""
+
+    label = 'query_index'
+    measures = ['took']
+
+    def __init__(self, es: elasticsearch.Elasticsearch, index_name: str,
+                 body: Dict[str, Any]):
+        self.es = es
+        self.index_name = index_name
+        self.body = body
+
+    def _action(self):
+        """Queries a vector against an OpenSearch index.
+
+        Returns:
+            An OpenSearch query response body.
+        """
+        return self.es.search(index=self.index_name, body=self.body)
 
 
 def bulk_transform(partition: np.ndarray,
                    action=Dict[str, Any]) -> List[Dict[str, Any]]:
     """Partitions and transforms a list of vectors into OpenSearch's bulk injection format.
-
     Args:
         section: An array of vectors to transform.
-        action: Bulk API action
-
+        action: Bulk API action.
     Returns:
         An array of transformed vectors in bulk format.
     """
@@ -77,32 +139,14 @@ def bulk_transform(partition: np.ndarray,
     return actions
 
 
-@profile.label('bulk_add')
-@profile.step
-def bulk(es: elasticsearch.Elasticsearch, index_name: str, body):
-    """Make bulk request to Elasticsearch.
-
-    Args:
-        es: An OpenSearch client.
-        index_name: Name of Elasticsearch index
-        body: Bulk request body
-
-    Returns:
-        Elasticsearch bulk response body.
-    """
-    return es.bulk(index=index_name, body=body)
-
-
 def bulk_index(es: elasticsearch.Elasticsearch, index_name: str,
                dataset: h5py.Dataset, bulk_size: int):
     """Bulk indexes vectors into an Elasticsearch index.
-
     Args:
         es: An OpenSearch client.
         index_name: Name of the OpenSearch index to ingest vectors into.
         dataset: Dataset of vectors to bulk ingest.
         bulk_size: Number of vectors in one bulk request.
-
     Returns:
         An array of bulk injection responses.
     """
@@ -110,59 +154,13 @@ def bulk_index(es: elasticsearch.Elasticsearch, index_name: str,
     action = {'index': {'_index': index_name}}
     i = 0
     while i < dataset.len():
-        partition = dataset[i:i + bulk_size]
+        partition = cast(np.ndarray, dataset[i:i + bulk_size])
         body = bulk_transform(partition, action)
-        result = bulk(es=es, index_name=index_name, body=body)
+        result = BulkStep(es=es, index_name=index_name, body=body).execute()
         results.append(result)
         i += bulk_size
 
     return results
-
-
-@profile.label('refresh_index')
-@profile.took
-@profile.step
-def refresh_index(es: elasticsearch.Elasticsearch, index_name: str):
-    """Refreshes an OpenSearch index, making it available for searching.
-
-    Args:
-        es: An OpenSearch client.
-        index_name: Name of the OpenSearch index to be refreshed.
-
-    Returns:
-        An OpenSearch index refresh response body.
-    """
-    return es.indices.refresh(index=index_name)
-
-
-def delete_index(es: elasticsearch.Elasticsearch, index_name: str):
-    """Deletes an OpenSearch index.
-
-    Args:
-        es: An OpenSearch client.
-        index_name: Name of the OpenSearch index to be deleted.
-
-    Returns:
-        An OpenSearch index deletion response body.
-    """
-    es.indices.delete(index=index_name)
-
-
-@profile.label('query_index')
-@profile.step
-def query_index(es: elasticsearch.Elasticsearch, index_name: str,
-                body: Dict[str, Any]):
-    """Queries a vector against an OpenSearch index.
-
-    Args:
-        es: An OpenSearch client.
-        index_name: Name of the OpenSearch index to be searched against.
-        body: A dictionary containing the body of the search request.
-
-    Returns:
-        An OpenSearch query response body.
-    """
-    return es.search(index=index_name, body=body)
 
 
 def batch_query_index(es: elasticsearch.Elasticsearch, index_name: str,
@@ -190,6 +188,19 @@ def batch_query_index(es: elasticsearch.Elasticsearch, index_name: str,
         }
     }
     return [
-        query_index(es=es, index_name=index_name, body=get_body(v, k))
-        for v in dataset
+        QueryIndexStep(es=es, index_name=index_name,
+                       body=get_body(v, k)).execute() for v in dataset
     ]
+
+
+def delete_index(es: elasticsearch.Elasticsearch, index_name: str):
+    """Deletes an OpenSearch index.
+
+    Args:
+        es: An OpenSearch client.
+        index_name: Name of the OpenSearch index to be deleted.
+
+    Returns:
+        An OpenSearch index deletion response body.
+    """
+    es.indices.delete(index=index_name)

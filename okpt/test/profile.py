@@ -27,33 +27,6 @@ from typing import Callable, Dict
 import psutil
 
 
-def step(f: Callable):
-    """Decorates a function as a test step.
-
-    Because the functions to profile a step require a dictionary as the step
-    output, this function, besides semantically denoting a function as a step,
-    also wraps the step and forces the output to be an empty dictionary if
-    needed.
-
-    Args:
-        f: Function to decorate.
-
-    Returns:
-        If the output of the passed in function is a dictionary, it returns that
-        output. Otherwise, it returns an empty dictionary.
-    """
-
-    @functools.wraps(f)
-    def wrapper(*args, **kwargs):
-        result = f(*args, **kwargs)
-        if isinstance(result, dict):
-            return result
-        else:
-            return {}
-
-    return wrapper
-
-
 class TimerStoppedWithoutStartingError(Exception):
     """Error raised when Timer is stopped without having been started."""
 
@@ -95,6 +68,36 @@ class _Timer():
         return elapsed
 
 
+def took(f: Callable):
+    """Profiles a functions execution time.
+
+    Args:
+        f: Function to profile.
+
+    Returns:
+        A function that wraps the passed in function and adds a time took field
+        to the return value.
+    """
+
+    @functools.wraps(f)
+    def wrapper(*args, **kwargs):
+        """Wrapper function."""
+        timer = _Timer()
+        timer.start()
+        result = f(*args, **kwargs)
+        time_took = timer.end()
+
+        # if result already has a `took` field, don't modify the result
+        if isinstance(result, dict) and 'took' in result:
+            return result
+        # `result` may not be a dictionary, so it may not be unpackable
+        elif isinstance(result, dict):
+            return {**result, 'took': time_took}
+        return {'took': time_took}
+
+    return wrapper
+
+
 def memory(f: Callable[..., Dict]):
     """Profiles a functions memory usage.
 
@@ -116,55 +119,3 @@ def memory(f: Callable[..., Dict]):
         return {**result, 'memory': used_memory_end - used_memory_start}
 
     return wrapper
-
-
-def took(f: Callable[..., Dict]):
-    """Profiles a functions execution time.
-
-    Args:
-        f: Function to profile.
-
-    Returns:
-        A function that wraps the passed in function and adds a time took field
-        to the return value.
-    """
-
-    @functools.wraps(f)
-    def wrapper(*args, **kwargs):
-        """Wrapper function."""
-        timer = _Timer()
-        timer.start()
-        result = f(*args, **kwargs)
-        time_took = timer.end()
-        return {**result, 'took': time_took}
-
-    return wrapper
-
-
-def label(name: str):
-    """Adds a label to a function's output.
-
-    Args:
-        name: Function label.
-
-    Returns:
-        A function that wraps the passed in function and adds a label field
-        to the return value.
-    """
-
-    def label_decorator(f: Callable[..., Dict]):
-        """Decorator function.
-
-        Args:
-            f: Function to label.
-        """
-
-        @functools.wraps(f)
-        def wrapper(*args, **kwargs):
-            """Wrapper function."""
-            result = f(*args, **kwargs)
-            return {**result, 'label': name}
-
-        return wrapper
-
-    return label_decorator

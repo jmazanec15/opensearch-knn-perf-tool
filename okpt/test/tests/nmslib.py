@@ -21,27 +21,33 @@ from okpt.test.tests import base
 
 class NmslibIndexTest(base.Test):
     """See base class. Test class for indexing against NMSLIB."""
+
     def _run_steps(self):
         """See base class. Initializes index, bulk indexes vectors, and creates the index."""
-        result = nmslib.init_index(service_config=self.service_config)
+        result = nmslib.InitIndexStep(
+            service_config=self.service_config).execute()
         self.index = result['index']
         self.step_results = [
             result,
-            nmslib.bulk_index(index=self.index, dataset=self.dataset.train),
-            nmslib.create_index(index=self.index,
-                                service_config=self.service_config)
+            nmslib.BulkIndexStep(index=self.index,
+                                 dataset=self.dataset.train).execute(),
+            nmslib.CreateIndexStep(
+                index=self.index, service_config=self.service_config).execute(),
         ]
 
 
 class NmslibQueryTest(base.Test):
     """See base class. Test class for querying against NMSLIB."""
+
     def setup(self):
         """See base class. Sets up an NMSLIB index."""
-        result = nmslib.init_index(service_config=self.service_config)
+        result = nmslib.InitIndexStep(
+            service_config=self.service_config).execute()
         self.index = result['index']
-        nmslib.bulk_index(index=self.index, dataset=self.dataset.train)
-        nmslib.create_index(index=self.index,
-                            service_config=self.service_config)
+        nmslib.BulkIndexStep(index=self.index,
+                             dataset=self.dataset.train).execute()
+        nmslib.CreateIndexStep(index=self.index,
+                               service_config=self.service_config).execute()
         self.index.setQueryTimeParams(
             {'efSearch': self.service_config.method.parameters.ef_search})
 

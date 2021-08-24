@@ -62,11 +62,12 @@ class OpenSearchIndexTest(OpenSearchTest):
     def _run_steps(self):
         """See base class. Creates index, bulk indexes vectors, and refreshes the index."""
         self.step_results = [
-            opensearch.create_index(self.es, self.index_name,
-                                    self.service_config.index_spec),
+            opensearch.CreateIndexStep(
+                self.es, self.index_name,
+                self.service_config.index_spec).execute(),
             *opensearch.bulk_index(self.es, self.index_name, self.dataset.train,
                                    self.service_config.bulk_size),
-            opensearch.refresh_index(self.es, self.index_name)
+            opensearch.RefreshIndexStep(self.es, self.index_name).execute()
         ]
 
 
@@ -77,11 +78,11 @@ class OpenSearchQueryTest(OpenSearchTest):
         """See base class. Sets up an OpenSearch index."""
         super().setup()
 
-        opensearch.create_index(self.es, self.index_name,
-                                self.service_config.index_spec)
+        opensearch.CreateIndexStep(self.es, self.index_name,
+                                   self.service_config.index_spec).execute()
         opensearch.bulk_index(self.es, self.index_name, self.dataset.train,
                               self.service_config.bulk_size)
-        opensearch.refresh_index(self.es, self.index_name)
+        opensearch.RefreshIndexStep(self.es, self.index_name).execute()
 
     def _run_steps(self):
         """See base class. Queries vectors against an OpenSearch index."""
@@ -93,4 +94,5 @@ class OpenSearchQueryTest(OpenSearchTest):
         ]
 
     def _cleanup(self):
+        """Override default OpenSearchTest cleanup. Do not delete index between runs."""
         pass
