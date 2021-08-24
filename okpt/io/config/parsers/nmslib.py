@@ -36,7 +36,7 @@ class MethodParametersConfig:
 @dataclass
 class MethodConfig:
     name: str
-    space_type: str
+    space_type: str  # not in `parameters` to match OpenSearch config
     parameters: MethodParametersConfig
 
 
@@ -53,6 +53,7 @@ class NmslibParser(base.BaseParser):
     Methods:
         parse: Parse and validate the NMSLIB config.
     """
+
     def __init__(self):
         super().__init__('nmslib')
 
