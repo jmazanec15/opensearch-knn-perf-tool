@@ -16,7 +16,7 @@
 # under the License.
 """Parses and defines command line arguments for the program.
 
-Defines the subcommands `test`, `plot`, and `compare` and the corresponding
+Defines the subcommands `test`, `plot`, and `diff` and the corresponding
 files that are required by each command.
 
 Functions:
@@ -27,6 +27,8 @@ Functions:
 import argparse
 from dataclasses import dataclass
 from io import TextIOWrapper
+import os
+from typing import List, Union
 
 _readable_file_type = argparse.FileType('r')
 _writable_file_type = argparse.FileType('w')
@@ -37,37 +39,43 @@ def _add_config_path_arg(parser, name, help_msg='Path of configuration file.'):
     parser.add_argument(name, type=_readable_file_type, help=help_msg)
 
 
-def _add_output_path_arg(parser, name, help_msg='Path of output file.'):
-    """"Add output file path argument."""
-    parser.add_argument(name, type=_writable_file_type, help=help_msg)
-
-
 # TODO: add custom nargs for 2 or more args instead of 1
 def _add_results_paths_arg(parser, name, help_msg='Paths of results files.'):
     """"Add results files paths argument."""
-    parser.add_argument(name,
-                        type=_writable_file_type,
-                        nargs='+',
-                        help=help_msg)
+    parser.add_argument(
+        name,
+        type=_writable_file_type,
+        nargs='+',
+        help=help_msg,
+    )
+
+
+def _add_output_path_arg(parser, name, help_msg='Path of output file.'):
+    """"Add output file path argument."""
+    parser.add_argument(
+        name,
+        type=_writable_file_type,
+        help=help_msg,
+        default=os.devnull,
+    )
 
 
 def _add_test_subcommand(subparsers):
-    parser_test = subparsers.add_parser('test')
-    _add_config_path_arg(parser_test, 'config_path')
-    _add_output_path_arg(parser_test, 'output_path')
+    test_parser = subparsers.add_parser('test')
+    _add_config_path_arg(test_parser, 'config_path')
+    _add_output_path_arg(test_parser, 'output_path')
+
+
+def _add_diff_subcommand(subparsers):
+    diff_parser = subparsers.add_parser('diff')
+    _add_results_paths_arg(diff_parser, 'result_paths')
+    _add_output_path_arg(diff_parser, 'output_path')
 
 
 def _add_plot_subcommand(subparsers):
-    parser_plot = subparsers.add_parser('plot')
-    _add_config_path_arg(parser_plot, 'config_path')
-    _add_results_paths_arg(parser_plot, 'results_paths')
-
-
-def _add_compare_subcommand(subparsers):
-    parser_compare = subparsers.add_parser('compare')
-    _add_config_path_arg(parser_compare, 'config_path')
-    _add_output_path_arg(parser_compare, 'output_path')
-    _add_results_paths_arg(parser_compare, 'results_paths')
+    plot_parser = subparsers.add_parser('plot')
+    _add_results_paths_arg(plot_parser, 'result_paths')
+    _add_output_path_arg(plot_parser, 'output_path')
 
 
 _parser = argparse.ArgumentParser(
@@ -90,27 +98,40 @@ def define_args():
 
     # add subcommands
     _add_test_subcommand(subparsers)
+    _add_diff_subcommand(subparsers)
     _add_plot_subcommand(subparsers)
-    _add_compare_subcommand(subparsers)
 
 
 @dataclass
-class ToolArgs:
+class TestArgs:
     log: str
     command: str
     config: TextIOWrapper
     output: TextIOWrapper
 
 
-def get_args() -> ToolArgs:
+@dataclass
+class DiffArgs:
+    log: str
+    command: str
+    results: List[TextIOWrapper]
+    output: TextIOWrapper
+
+
+def get_args() -> Union[TestArgs, DiffArgs]:
     """Parses and returns the command line args.
 
     Returns:
         A dict containing the command line args.
     """
     args = _parser.parse_args()
-    tool_args = ToolArgs(log=args.log,
-                         command=args.command,
-                         config=args.config_path,
-                         output=args.output_path)
-    return tool_args
+    if args.command == 'test':
+        return TestArgs(log=args.log,
+                        command=args.command,
+                        config=args.config_path,
+                        output=args.output_path)
+    else:
+        return DiffArgs(log=args.log,
+                        command=args.command,
+                        results=args.result_paths,
+                        output=args.output_path)
