@@ -16,21 +16,19 @@
 # under the License.
 """ Runner script that serves as the main controller of the testing tool."""
 
-import json
 import logging
+import sys
 from typing import cast
 from okpt.diff import diff
-import sys
 
 from okpt.io import args
-from okpt.io.config.parsers import base, tool
+from okpt.io.config.parsers import tool
 from okpt.io.utils import reader, writer
 from okpt.test import runner
 
 
 def main():
     """Main function of entry module."""
-    args.define_args()
     cli_args = args.get_args()
     output = cli_args.output
     if cli_args.log:
@@ -50,16 +48,19 @@ def main():
         test_result = test_runner.execute()
 
         # write test results
-        logging.debug(f'Test Result:\n {json.dumps(test_result, indent=2)}')
-        writer.write_json(data=test_result, file=output)
+        logging.debug(
+            f'Test Result:\n {writer.write_json(test_result, sys.stdout, pretty=True)}'
+        )
+        writer.write_json(test_result, output, pretty=True)
     elif cli_args.command == 'diff':
         cli_args = cast(args.DiffArgs, cli_args)
 
         # parse test results
-        l_result, r_result = [reader.parse_json(r) for r in cli_args.results]
+        l_result = reader.parse_json(cli_args.l_result)
+        r_result = reader.parse_json(cli_args.r_result)
 
         # get diff
         diff_result = diff.Diff(l_result, r_result).diff()
-        print(json.dumps(diff_result, indent=2))
+        writer.write_json(data=diff_result, file=output, pretty=True)
     elif cli_args.command == 'plot':
         pass  # TODO

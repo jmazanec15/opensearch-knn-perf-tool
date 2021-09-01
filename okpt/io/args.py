@@ -27,86 +27,82 @@ Functions:
 import argparse
 from dataclasses import dataclass
 from io import TextIOWrapper
-import os
+import sys
 from typing import List, Union
 
-_readable_file_type = argparse.FileType('r')
-_writable_file_type = argparse.FileType('w')
+_read_type = argparse.FileType('r')
+_write_type = argparse.FileType('w')
 
 
-def _add_config_path_arg(parser, name, help_msg='Path of configuration file.'):
+def _add_config_path(parser, name, **kwargs):
     """"Add configuration file path argument."""
-    parser.add_argument(name, type=_readable_file_type, help=help_msg)
+    opts = {
+        'type': _read_type,
+        'help': 'Path of configuration file.',
+        'metavar': 'config_path',
+        **kwargs,
+    }
+    parser.add_argument(name, **opts)
+
+
+def _add_result_path(parser, name, **kwargs):
+    """"Add results files paths argument."""
+    opts = {
+        'type': _read_type,
+        'help': 'Path of one result file.',
+        'metavar': 'result_path',
+        **kwargs,
+    }
+    parser.add_argument(name, **opts)
 
 
 # TODO: add custom nargs for 2 or more args instead of 1
-def _add_result_paths_arg(parser, name, help_msg='Paths of results files.'):
+def _add_result_paths(parser, name, **kwargs):
     """"Add results files paths argument."""
-    parser.add_argument(
-        name,
-        type=_readable_file_type,
-        nargs='+',
-        help=help_msg,
-    )
+    opts = {
+        'nargs': '+',
+        'type': _read_type,
+        'help': 'Paths of result files.',
+        'metavar': 'result_paths',
+        **kwargs,
+    }
+    parser.add_argument(name, **opts)
 
 
-def _add_output_path_arg(parser, name, help_msg='Path of output file.'):
+def _add_output_path(parser, name, **kwargs):
     """"Add output file path argument."""
-    parser.add_argument(
-        name,
-        type=_writable_file_type,
-        help=help_msg,
-        default=os.devnull,
-    )
+    opts = {
+        'type': _write_type,
+        'help': 'Path of output file.',
+        'metavar': 'output_path',
+        **kwargs,
+    }
+    parser.add_argument(name, **opts)
 
 
 def _add_test_subcommand(subparsers):
     test_parser = subparsers.add_parser('test')
-    _add_config_path_arg(test_parser, 'config_path')
-    _add_output_path_arg(test_parser, 'output_path')
+    _add_config_path(test_parser, 'config')
+    _add_output_path(test_parser, 'output')
 
 
 def _add_diff_subcommand(subparsers):
     diff_parser = subparsers.add_parser('diff')
-    _add_result_paths_arg(diff_parser, 'result_paths')
-    _add_output_path_arg(diff_parser, '--output_path')
+    _add_result_path(diff_parser,
+                     'l_result',
+                     help='Base test result.',
+                     metavar='base_result')
+    _add_result_path(diff_parser,
+                     'r_result',
+                     help='Changed test result.',
+                     metavar='changed_result')
+    _add_output_path(diff_parser, '--output', default=sys.stdout)
 
 
 def _add_plot_subcommand(subparsers):
     plot_parser = subparsers.add_parser('plot')
-    _add_result_paths_arg(plot_parser, 'result_paths')
-    _add_output_path_arg(plot_parser, 'output_path')
-
-
-_parser = argparse.ArgumentParser(
-    description=
-    'Run performance tests against the OpenSearch plugin and various ANN libaries.'
-)
-
-
-def define_args():
-    """Define tool commands."""
-    _parser.add_argument('--log',
-                         type=str,
-                         choices=[
-                             'debug',
-                             'info',
-                             'warning',
-                             'error',
-                             'critical',
-                         ],
-                         default='info')
-    subparsers = _parser.add_subparsers(
-        title='commands',
-        dest='command',
-        help='sub-command help',
-    )
-    subparsers.required = True
-
-    # add subcommands
-    _add_test_subcommand(subparsers)
-    _add_diff_subcommand(subparsers)
-    _add_plot_subcommand(subparsers)
+    _add_result_paths(plot_parser, 'results')
+    _add_output_path(plot_parser, 'output')
 
 
 @dataclass
@@ -121,24 +117,66 @@ class TestArgs:
 class DiffArgs:
     log: str
     command: str
+    l_result: TextIOWrapper
+    r_result: TextIOWrapper
+    output: TextIOWrapper
+
+
+@dataclass
+class PlotArgs:
+    log: str
+    command: str
     results: List[TextIOWrapper]
     output: TextIOWrapper
 
 
-def get_args() -> Union[TestArgs, DiffArgs]:
-    """Parses and returns the command line args.
+def get_args() -> Union[TestArgs, DiffArgs, PlotArgs]:
+    """Define, parse and return command line args.
 
     Returns:
         A dict containing the command line args.
     """
-    args = _parser.parse_args()
+    parser = argparse.ArgumentParser(
+        description=
+        'Run performance tests against the OpenSearch plugin and various ANN libaries.'
+    )
+
+    def define_args():
+        """Define tool commands."""
+
+        # add log level arg
+        parser.add_argument(
+            '--log',
+            default='info',
+            type=str,
+            choices=['debug', 'info', 'warning', 'error', 'critical'],
+            help='Log level of the tool.')
+
+        subparsers = parser.add_subparsers(title='commands',
+                                           dest='command',
+                                           help='sub-command help')
+        subparsers.required = True
+
+        # add subcommands
+        _add_test_subcommand(subparsers)
+        _add_diff_subcommand(subparsers)
+        _add_plot_subcommand(subparsers)
+
+    define_args()
+    args = parser.parse_args()
     if args.command == 'test':
         return TestArgs(log=args.log,
                         command=args.command,
-                        config=args.config_path,
-                        output=args.output_path)
-    else:
+                        config=args.config,
+                        output=args.output)
+    elif args.command == 'diff':
         return DiffArgs(log=args.log,
                         command=args.command,
-                        results=args.result_paths,
-                        output=args.output_path)
+                        l_result=args.l_result,
+                        r_result=args.r_result,
+                        output=args.output)
+    else:
+        return PlotArgs(log=args.log,
+                        command=args.command,
+                        results=args.results,
+                        output=args.output)
