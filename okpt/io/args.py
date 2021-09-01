@@ -40,11 +40,11 @@ def _add_config_path_arg(parser, name, help_msg='Path of configuration file.'):
 
 
 # TODO: add custom nargs for 2 or more args instead of 1
-def _add_results_paths_arg(parser, name, help_msg='Paths of results files.'):
+def _add_result_paths_arg(parser, name, help_msg='Paths of results files.'):
     """"Add results files paths argument."""
     parser.add_argument(
         name,
-        type=_writable_file_type,
+        type=_readable_file_type,
         nargs='+',
         help=help_msg,
     )
@@ -68,13 +68,13 @@ def _add_test_subcommand(subparsers):
 
 def _add_diff_subcommand(subparsers):
     diff_parser = subparsers.add_parser('diff')
-    _add_results_paths_arg(diff_parser, 'result_paths')
-    _add_output_path_arg(diff_parser, 'output_path')
+    _add_result_paths_arg(diff_parser, 'result_paths')
+    _add_output_path_arg(diff_parser, '--output_path')
 
 
 def _add_plot_subcommand(subparsers):
     plot_parser = subparsers.add_parser('plot')
-    _add_results_paths_arg(plot_parser, 'result_paths')
+    _add_result_paths_arg(plot_parser, 'result_paths')
     _add_output_path_arg(plot_parser, 'output_path')
 
 
@@ -86,14 +86,21 @@ _parser = argparse.ArgumentParser(
 
 def define_args():
     """Define tool commands."""
-    _parser.add_argument(
-        '--log',
-        type=str,
-        choices=['debug', 'info', 'warning', 'error', 'critical'],
-        default='info')
-    subparsers = _parser.add_subparsers(title='commands',
-                                        dest='command',
-                                        help='sub-command help')
+    _parser.add_argument('--log',
+                         type=str,
+                         choices=[
+                             'debug',
+                             'info',
+                             'warning',
+                             'error',
+                             'critical',
+                         ],
+                         default='info')
+    subparsers = _parser.add_subparsers(
+        title='commands',
+        dest='command',
+        help='sub-command help',
+    )
     subparsers.required = True
 
     # add subcommands
