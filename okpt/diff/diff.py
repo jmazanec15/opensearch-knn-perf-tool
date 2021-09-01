@@ -56,8 +56,8 @@ class Diff:
 
     def __init__(self, l_result: Dict[str, Any], r_result: Dict[str, Any]):
         """Initializes test results and validate them."""
-        self.l_result = l_result
-        self.r_result = r_result
+        self.l_result = l_result['results']
+        self.r_result = r_result['results']
 
         # validate test results
         is_valid, key, result = self._validate_structure()
