@@ -44,7 +44,7 @@ class InvalidTestResultsType(Exception):
 
 
 def _is_numeric(a) -> bool:
-    return type(a) == int or type(a) == float
+    return isinstance(a, (int, float))
 
 
 class Diff:
@@ -92,6 +92,4 @@ class Diff:
         return {
             key: self.r_result[key] - self.l_result[key]
             for key in self.l_result
-            if isinstance(self.l_result[key], int) or
-            isinstance(self.l_result[key], float)
         }
