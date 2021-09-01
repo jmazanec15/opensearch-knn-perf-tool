@@ -34,7 +34,7 @@ _read_type = argparse.FileType('r')
 _write_type = argparse.FileType('w')
 
 
-def _add_config_path(parser, name, **kwargs):
+def _add_config(parser, name, **kwargs):
     """"Add configuration file path argument."""
     opts = {
         'type': _read_type,
@@ -45,7 +45,7 @@ def _add_config_path(parser, name, **kwargs):
     parser.add_argument(name, **opts)
 
 
-def _add_result_path(parser, name, **kwargs):
+def _add_result(parser, name, **kwargs):
     """"Add results files paths argument."""
     opts = {
         'type': _read_type,
@@ -57,7 +57,7 @@ def _add_result_path(parser, name, **kwargs):
 
 
 # TODO: add custom nargs for 2 or more args instead of 1
-def _add_result_paths(parser, name, **kwargs):
+def _add_results(parser, name, **kwargs):
     """"Add results files paths argument."""
     opts = {
         'nargs': '+',
@@ -69,7 +69,7 @@ def _add_result_paths(parser, name, **kwargs):
     parser.add_argument(name, **opts)
 
 
-def _add_output_path(parser, name, **kwargs):
+def _add_output(parser, name, **kwargs):
     """"Add output file path argument."""
     opts = {
         'type': _write_type,
@@ -80,29 +80,38 @@ def _add_output_path(parser, name, **kwargs):
     parser.add_argument(name, **opts)
 
 
-def _add_test_subcommand(subparsers):
+def _add_metadata(parser, name, **kwargs):
+    opts = {
+        'action': 'store_true',
+        **kwargs,
+    }
+    parser.add_argument(name, **opts)
+
+
+def _add_test_cmd(subparsers):
     test_parser = subparsers.add_parser('test')
-    _add_config_path(test_parser, 'config')
-    _add_output_path(test_parser, 'output')
+    _add_config(test_parser, 'config')
+    _add_output(test_parser, 'output')
 
 
-def _add_diff_subcommand(subparsers):
+def _add_diff_cmd(subparsers):
     diff_parser = subparsers.add_parser('diff')
-    _add_result_path(diff_parser,
-                     'l_result',
-                     help='Base test result.',
-                     metavar='base_result')
-    _add_result_path(diff_parser,
-                     'r_result',
-                     help='Changed test result.',
-                     metavar='changed_result')
-    _add_output_path(diff_parser, '--output', default=sys.stdout)
+    _add_metadata(diff_parser, '--metadata')
+    _add_result(diff_parser,
+                'l_result',
+                help='Base test result.',
+                metavar='base_result')
+    _add_result(diff_parser,
+                'r_result',
+                help='Changed test result.',
+                metavar='changed_result')
+    _add_output(diff_parser, '--output', default=sys.stdout)
 
 
-def _add_plot_subcommand(subparsers):
+def _add_plot_cmd(subparsers):
     plot_parser = subparsers.add_parser('plot')
-    _add_result_paths(plot_parser, 'results')
-    _add_output_path(plot_parser, 'output')
+    _add_results(plot_parser, 'results')
+    _add_output(plot_parser, 'output')
 
 
 @dataclass
@@ -117,6 +126,7 @@ class TestArgs:
 class DiffArgs:
     log: str
     command: str
+    metadata: bool
     l_result: TextIOWrapper
     r_result: TextIOWrapper
     output: TextIOWrapper
@@ -158,9 +168,9 @@ def get_args() -> Union[TestArgs, DiffArgs, PlotArgs]:
         subparsers.required = True
 
         # add subcommands
-        _add_test_subcommand(subparsers)
-        _add_diff_subcommand(subparsers)
-        _add_plot_subcommand(subparsers)
+        _add_test_cmd(subparsers)
+        _add_diff_cmd(subparsers)
+        _add_plot_cmd(subparsers)
 
     define_args()
     args = parser.parse_args()
@@ -172,6 +182,7 @@ def get_args() -> Union[TestArgs, DiffArgs, PlotArgs]:
     elif args.command == 'diff':
         return DiffArgs(log=args.log,
                         command=args.command,
+                        metadata=args.metadata,
                         l_result=args.l_result,
                         r_result=args.r_result,
                         output=args.output)
