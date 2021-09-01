@@ -18,11 +18,13 @@
 
 import json
 import logging
+from typing import cast
+from okpt.diff import diff
 import sys
 
 from okpt.io import args
 from okpt.io.config.parsers import base, tool
-from okpt.io.utils.writer import write_json
+from okpt.io.utils import reader, writer
 from okpt.test import runner
 
 
@@ -36,20 +38,28 @@ def main():
         logging.basicConfig(level=log_level)
 
     if cli_args.command == 'test':
-        try:
-            parser = tool.ToolParser()
-            tool_config = parser.parse(cli_args.config)
-            logging.info('Configs are valid.')
+        cli_args = cast(args.TestArgs, cli_args)
 
-            test_runner = runner.TestRunner(tool_config=tool_config)
-            test_result = test_runner.execute()
-            logging.debug(f'Test Result:\n {json.dumps(test_result, indent=2)}')
-            write_json(data=test_result, file=output)
-        except base.ConfigurationError as e:
-            logging.error(e.message)
-            sys.exit(1)
+        # parse configs
+        parser = tool.ToolParser()
+        tool_config = parser.parse(cli_args.config)
+        logging.info('Configs are valid.')
 
+        # run tests
+        test_runner = runner.TestRunner(tool_config=tool_config)
+        test_result = test_runner.execute()
+
+        # write test results
+        logging.debug(f'Test Result:\n {json.dumps(test_result, indent=2)}')
+        writer.write_json(data=test_result, file=output)
+    elif cli_args.command == 'diff':
+        cli_args = cast(args.DiffArgs, cli_args)
+
+        # parse test results
+        l_result, r_result = [reader.parse_json(r) for r in cli_args.results]
+
+        # get diff
+        diff_result = diff.Diff(l_result, r_result).diff()
+        print(json.dumps(diff_result, indent=2))
     elif cli_args.command == 'plot':
-        pass  # TODO
-    elif cli_args.command == 'compare':
         pass  # TODO
