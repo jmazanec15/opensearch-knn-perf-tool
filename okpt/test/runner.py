@@ -117,7 +117,9 @@ class TestRunner():
 
         # add metadata to test results
         tool_result = {
-            **self._get_metadata(), 'aggregate':
+            'metadata':
+                self._get_metadata(),
+            'results':
                 aggregate,
             'test_parameters':
                 dataclasses.asdict(self.tool_config.test_parameters)
