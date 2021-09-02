@@ -56,11 +56,12 @@ def main():
         cli_args = cast(args.DiffArgs, cli_args)
 
         # parse test results
-        l_result = reader.parse_json(cli_args.l_result)
-        r_result = reader.parse_json(cli_args.r_result)
+        base_result = reader.parse_json(cli_args.base_result)
+        changed_result = reader.parse_json(cli_args.changed_result)
 
         # get diff
-        diff_result = diff.Diff(l_result, r_result).diff()
+        diff_result = diff.Diff(base_result, changed_result,
+                                cli_args.metadata).diff()
         writer.write_json(data=diff_result, file=output, pretty=True)
     elif cli_args.command == 'plot':
         pass  # TODO

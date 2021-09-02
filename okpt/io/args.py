@@ -98,11 +98,11 @@ def _add_diff_cmd(subparsers):
     diff_parser = subparsers.add_parser('diff')
     _add_metadata(diff_parser, '--metadata')
     _add_result(diff_parser,
-                'l_result',
+                'base_result',
                 help='Base test result.',
                 metavar='base_result')
     _add_result(diff_parser,
-                'r_result',
+                'changed_result',
                 help='Changed test result.',
                 metavar='changed_result')
     _add_output(diff_parser, '--output', default=sys.stdout)
@@ -127,8 +127,8 @@ class DiffArgs:
     log: str
     command: str
     metadata: bool
-    l_result: TextIOWrapper
-    r_result: TextIOWrapper
+    base_result: TextIOWrapper
+    changed_result: TextIOWrapper
     output: TextIOWrapper
 
 
@@ -183,8 +183,8 @@ def get_args() -> Union[TestArgs, DiffArgs, PlotArgs]:
         return DiffArgs(log=args.log,
                         command=args.command,
                         metadata=args.metadata,
-                        l_result=args.l_result,
-                        r_result=args.r_result,
+                        base_result=args.base_result,
+                        changed_result=args.changed_result,
                         output=args.output)
     else:
         return PlotArgs(log=args.log,
