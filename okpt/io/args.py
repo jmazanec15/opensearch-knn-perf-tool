@@ -56,7 +56,6 @@ def _add_result(parser, name, **kwargs):
     parser.add_argument(name, **opts)
 
 
-# TODO: add custom nargs for 2 or more args instead of 1
 def _add_results(parser, name, **kwargs):
     """"Add results files paths argument."""
     opts = {
