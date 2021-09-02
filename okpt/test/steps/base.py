@@ -25,7 +25,7 @@ class Step:
 
     Attributes:
         label: Name of the step.
-        measures: Metrics that the step should profile.
+        measures: Metrics that the step should profile. The available measures are in the `profile` module.
 
     Methods:
         execute: Run the step and return a step response with the label and corresponding measures.
