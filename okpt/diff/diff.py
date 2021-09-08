@@ -31,7 +31,7 @@ class InconsistentTestResultsError(Exception):
         super().__init__(self.message)
 
 
-class InvalidTestResultType(Exception):
+class InvalidTestResultTypeError(Exception):
     """Exception raised when a test result has non-numeric test result values.
 
     Attributes:
@@ -43,7 +43,7 @@ class InvalidTestResultType(Exception):
         super().__init__(self.message)
 
 
-class InvalidTestResult(Exception):
+class InvalidTestResultError(Exception):
     """Exception raised when a test result has missing or invalid fields.
 
     Attributes:
@@ -76,7 +76,7 @@ class Diff:
         # validate test result keys
         is_valid, key, result = self._validate_keys()
         if not is_valid:
-            raise InvalidTestResult(key, result)
+            raise InvalidTestResultError(key, result)
 
         self.base_results = self.base_result['results']
         self.changed_results = self.changed_result['results']
@@ -87,7 +87,7 @@ class Diff:
             raise InconsistentTestResultsError(key, result)
         is_valid, key, result = self._validate_types()
         if not is_valid:
-            raise InvalidTestResultType(key, result)
+            raise InvalidTestResultTypeError(key, result)
 
     def _validate_keys(self) -> Tuple[bool, str, str]:
         """Ensure both test results have `metadata` and `results` keys."""
