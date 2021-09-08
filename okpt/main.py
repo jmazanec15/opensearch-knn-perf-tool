@@ -19,8 +19,8 @@
 import logging
 import sys
 from typing import cast
-from okpt.diff import diff
 
+from okpt.diff import diff
 from okpt.io import args
 from okpt.io.config.parsers import tool
 from okpt.io.utils import reader, writer

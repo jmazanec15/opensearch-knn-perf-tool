@@ -21,8 +21,8 @@ so the functions in this module may return a blank dictionary in order to be
 profiled.
 """
 from typing import Any, Dict, List, cast
-import h5py
 
+import h5py
 import nmslib
 import numpy as np
 

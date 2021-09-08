@@ -16,8 +16,9 @@
 # under the License.
 """Provides base Step interface."""
 
-from okpt.test import profile
 from typing import Any, Dict, List
+
+from okpt.test import profile
 
 
 class Step:

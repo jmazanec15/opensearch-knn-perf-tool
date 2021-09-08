@@ -25,9 +25,9 @@ Functions:
 """
 
 import argparse
+import sys
 from dataclasses import dataclass
 from io import TextIOWrapper
-import sys
 from typing import List, Union
 
 _read_type = argparse.FileType('r')
