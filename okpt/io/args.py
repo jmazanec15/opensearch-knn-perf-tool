@@ -28,7 +28,7 @@ import argparse
 import sys
 from dataclasses import dataclass
 from io import TextIOWrapper
-from typing import List, Union
+from typing import Union
 
 _read_type = argparse.FileType('r')
 _write_type = argparse.FileType('w')
@@ -96,21 +96,19 @@ def _add_test_cmd(subparsers):
 def _add_diff_cmd(subparsers):
     diff_parser = subparsers.add_parser('diff')
     _add_metadata(diff_parser, '--metadata')
-    _add_result(diff_parser,
-                'base_result',
-                help='Base test result.',
-                metavar='base_result')
-    _add_result(diff_parser,
-                'changed_result',
-                help='Changed test result.',
-                metavar='changed_result')
+    _add_result(
+        diff_parser,
+        'base_result',
+        help='Base test result.',
+        metavar='base_result'
+    )
+    _add_result(
+        diff_parser,
+        'changed_result',
+        help='Changed test result.',
+        metavar='changed_result'
+    )
     _add_output(diff_parser, '--output', default=sys.stdout)
-
-
-def _add_plot_cmd(subparsers):
-    plot_parser = subparsers.add_parser('plot')
-    _add_results(plot_parser, 'results')
-    _add_output(plot_parser, 'output')
 
 
 @dataclass
@@ -131,15 +129,7 @@ class DiffArgs:
     output: TextIOWrapper
 
 
-@dataclass
-class PlotArgs:
-    log: str
-    command: str
-    results: List[TextIOWrapper]
-    output: TextIOWrapper
-
-
-def get_args() -> Union[TestArgs, DiffArgs, PlotArgs]:
+def get_args() -> Union[TestArgs, DiffArgs]:
     """Define, parse and return command line args.
 
     Returns:
@@ -158,35 +148,40 @@ def get_args() -> Union[TestArgs, DiffArgs, PlotArgs]:
             '--log',
             default='info',
             type=str,
-            choices=['debug', 'info', 'warning', 'error', 'critical'],
-            help='Log level of the tool.')
+            choices=['debug',
+                     'info',
+                     'warning',
+                     'error',
+                     'critical'],
+            help='Log level of the tool.'
+        )
 
-        subparsers = parser.add_subparsers(title='commands',
-                                           dest='command',
-                                           help='sub-command help')
+        subparsers = parser.add_subparsers(
+            title='commands',
+            dest='command',
+            help='sub-command help'
+        )
         subparsers.required = True
 
         # add subcommands
         _add_test_cmd(subparsers)
         _add_diff_cmd(subparsers)
-        _add_plot_cmd(subparsers)
 
     define_args()
     args = parser.parse_args()
     if args.command == 'test':
-        return TestArgs(log=args.log,
-                        command=args.command,
-                        config=args.config,
-                        output=args.output)
-    elif args.command == 'diff':
-        return DiffArgs(log=args.log,
-                        command=args.command,
-                        metadata=args.metadata,
-                        base_result=args.base_result,
-                        changed_result=args.changed_result,
-                        output=args.output)
+        return TestArgs(
+            log=args.log,
+            command=args.command,
+            config=args.config,
+            output=args.output
+        )
     else:
-        return PlotArgs(log=args.log,
-                        command=args.command,
-                        results=args.results,
-                        output=args.output)
+        return DiffArgs(
+            log=args.log,
+            command=args.command,
+            metadata=args.metadata,
+            base_result=args.base_result,
+            changed_result=args.changed_result,
+            output=args.output
+        )
