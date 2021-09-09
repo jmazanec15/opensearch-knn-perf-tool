@@ -16,6 +16,7 @@
 # under the License.
 """Provides the Diff class."""
 
+from enum import Enum
 from typing import Any, Dict, Tuple
 
 
@@ -32,6 +33,17 @@ class InvalidTestResultsError(Exception):
 
 def _is_numeric(a) -> bool:
     return isinstance(a, (int, float))
+
+
+class TestResultFields(str, Enum):
+    METADATA = 'metadata'
+    RESULTS = 'results'
+    TEST_PARAMETERS = 'test_parameters'
+
+
+class TestResultNames(str, Enum):
+    BASE = 'base_result'
+    CHANGED = 'changed_result'
 
 
 class Diff:
@@ -60,8 +72,8 @@ class Diff:
                 f'{result} has a missing or invalid key `{key}`.'
             )
 
-        self.base_results = self.base_result['results']
-        self.changed_results = self.changed_result['results']
+        self.base_results = self.base_result[TestResultFields.RESULTS]
+        self.changed_results = self.changed_result[TestResultFields.RESULTS]
 
         # make sure results have the same fields
         is_valid, key, result = self._validate_structure()
@@ -84,35 +96,40 @@ class Diff:
 
         # check if results have a `metadata` field and if `metadata` is a dict
         if self.metadata:
-            if not check_keydict('metadata', self.base_result):
-                return (False, 'metadata', 'base_result')
-            if not check_keydict('metadata', self.changed_result):
-                return (False, 'metadata', 'changed_result')
+            if not check_keydict(TestResultFields.METADATA, self.base_result):
+                return (False, TestResultFields.METADATA, TestResultNames.BASE)
+            if not check_keydict(TestResultFields.METADATA,
+                                 self.changed_result):
+                return (
+                    False,
+                    TestResultFields.METADATA,
+                    TestResultNames.CHANGED
+                )
         # check if results have a `results` field and `results` is a dict
-        if not check_keydict('results', self.base_result):
-            return (False, 'results', 'base_result')
-        if not check_keydict('results', self.changed_result):
-            return (False, 'results', 'changed_result')
+        if not check_keydict(TestResultFields.RESULTS, self.base_result):
+            return (False, TestResultFields.RESULTS, TestResultNames.BASE)
+        if not check_keydict(TestResultFields.RESULTS, self.changed_result):
+            return (False, TestResultFields.RESULTS, TestResultNames.CHANGED)
         return (True, '', '')
 
     def _validate_structure(self) -> Tuple[bool, str, str]:
         """Ensure both test results have the same keys."""
         for k in self.base_results:
             if not k in self.changed_results:
-                return (False, k, 'changed_result')
+                return (False, k, TestResultNames.CHANGED)
         for k in self.changed_results:
             if not k in self.base_results:
-                return (False, k, 'base_result')
+                return (False, k, TestResultNames.BASE)
         return (True, '', '')
 
     def _validate_types(self) -> Tuple[bool, str, str]:
         """Ensure both test results have numeric values."""
         for k, v in self.base_results.items():
             if not _is_numeric(v):
-                return (False, k, 'base_result')
+                return (False, k, TestResultNames.BASE)
         for k, v in self.changed_results.items():
             if not _is_numeric(v):
-                return (False, k, 'changed_result')
+                return (False, k, TestResultNames.BASE)
         return (True, '', '')
 
     def diff(self) -> Dict[str, Any]:
@@ -125,8 +142,11 @@ class Diff:
         # add metadata if specified
         if self.metadata:
             return {
-                'base_metadata': self.base_result['metadata'],
-                'changed_metadata': self.changed_result['metadata'],
-                'diff': results_diff
+                f'{TestResultNames.BASE}_{TestResultFields.METADATA}':
+                    self.base_result[TestResultFields.METADATA],
+                f'{TestResultNames.CHANGED}_{TestResultFields.METADATA}':
+                    self.changed_result[TestResultFields.METADATA],
+                'diff':
+                    results_diff
             }
         return results_diff
