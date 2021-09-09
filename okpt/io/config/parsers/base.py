@@ -37,9 +37,10 @@ class ConfigurationError(Exception):
     Attributes:
         message -- explanation of the error
     """
+
     def __init__(self, message: str):
-        super().__init__()
-        self.message = f'Configuration Syntax Error: {message}'
+        self.message = f'{message}'
+        super().__init__(self.message)
 
 
 class BaseParser():
@@ -52,6 +53,7 @@ class BaseParser():
     Methods:
         parse: Parse config.
     """
+
     def __init__(self, schema_name: str):
         self.validator = self._get_validator_from_schema_name(schema_name)
         self.errors = ''

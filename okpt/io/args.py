@@ -16,7 +16,7 @@
 # under the License.
 """Parses and defines command line arguments for the program.
 
-Defines the subcommands `test`, `plot`, and `compare` and the corresponding
+Defines the subcommands `test`, `plot`, and `diff` and the corresponding
 files that are required by each command.
 
 Functions:
@@ -25,92 +25,163 @@ Functions:
 """
 
 import argparse
+import sys
 from dataclasses import dataclass
 from io import TextIOWrapper
+from typing import Union
 
-_readable_file_type = argparse.FileType('r')
-_writable_file_type = argparse.FileType('w')
+_read_type = argparse.FileType('r')
+_write_type = argparse.FileType('w')
 
 
-def _add_config_path_arg(parser, name, help_msg='Path of configuration file.'):
+def _add_config(parser, name, **kwargs):
     """"Add configuration file path argument."""
-    parser.add_argument(name, type=_readable_file_type, help=help_msg)
+    opts = {
+        'type': _read_type,
+        'help': 'Path of configuration file.',
+        'metavar': 'config_path',
+        **kwargs,
+    }
+    parser.add_argument(name, **opts)
 
 
-def _add_output_path_arg(parser, name, help_msg='Path of output file.'):
-    """"Add output file path argument."""
-    parser.add_argument(name, type=_writable_file_type, help=help_msg)
-
-
-# TODO: add custom nargs for 2 or more args instead of 1
-def _add_results_paths_arg(parser, name, help_msg='Paths of results files.'):
+def _add_result(parser, name, **kwargs):
     """"Add results files paths argument."""
-    parser.add_argument(name,
-                        type=_writable_file_type,
-                        nargs='+',
-                        help=help_msg)
+    opts = {
+        'type': _read_type,
+        'help': 'Path of one result file.',
+        'metavar': 'result_path',
+        **kwargs,
+    }
+    parser.add_argument(name, **opts)
 
 
-def _add_test_subcommand(subparsers):
-    parser_test = subparsers.add_parser('test')
-    _add_config_path_arg(parser_test, 'config_path')
-    _add_output_path_arg(parser_test, 'output_path')
+def _add_results(parser, name, **kwargs):
+    """"Add results files paths argument."""
+    opts = {
+        'nargs': '+',
+        'type': _read_type,
+        'help': 'Paths of result files.',
+        'metavar': 'result_paths',
+        **kwargs,
+    }
+    parser.add_argument(name, **opts)
 
 
-def _add_plot_subcommand(subparsers):
-    parser_plot = subparsers.add_parser('plot')
-    _add_config_path_arg(parser_plot, 'config_path')
-    _add_results_paths_arg(parser_plot, 'results_paths')
+def _add_output(parser, name, **kwargs):
+    """"Add output file path argument."""
+    opts = {
+        'type': _write_type,
+        'help': 'Path of output file.',
+        'metavar': 'output_path',
+        **kwargs,
+    }
+    parser.add_argument(name, **opts)
 
 
-def _add_compare_subcommand(subparsers):
-    parser_compare = subparsers.add_parser('compare')
-    _add_config_path_arg(parser_compare, 'config_path')
-    _add_output_path_arg(parser_compare, 'output_path')
-    _add_results_paths_arg(parser_compare, 'results_paths')
+def _add_metadata(parser, name, **kwargs):
+    opts = {
+        'action': 'store_true',
+        **kwargs,
+    }
+    parser.add_argument(name, **opts)
 
 
-_parser = argparse.ArgumentParser(
-    description=
-    'Run performance tests against the OpenSearch plugin and various ANN libaries.'
-)
+def _add_test_cmd(subparsers):
+    test_parser = subparsers.add_parser('test')
+    _add_config(test_parser, 'config')
+    _add_output(test_parser, 'output')
 
 
-def define_args():
-    """Define tool commands."""
-    _parser.add_argument(
-        '--log',
-        type=str,
-        choices=['debug', 'info', 'warning', 'error', 'critical'],
-        default='info')
-    subparsers = _parser.add_subparsers(title='commands',
-                                        dest='command',
-                                        help='sub-command help')
-    subparsers.required = True
-
-    # add subcommands
-    _add_test_subcommand(subparsers)
-    _add_plot_subcommand(subparsers)
-    _add_compare_subcommand(subparsers)
+def _add_diff_cmd(subparsers):
+    diff_parser = subparsers.add_parser('diff')
+    _add_metadata(diff_parser, '--metadata')
+    _add_result(
+        diff_parser,
+        'base_result',
+        help='Base test result.',
+        metavar='base_result'
+    )
+    _add_result(
+        diff_parser,
+        'changed_result',
+        help='Changed test result.',
+        metavar='changed_result'
+    )
+    _add_output(diff_parser, '--output', default=sys.stdout)
 
 
 @dataclass
-class ToolArgs:
+class TestArgs:
     log: str
     command: str
     config: TextIOWrapper
     output: TextIOWrapper
 
 
-def get_args() -> ToolArgs:
-    """Parses and returns the command line args.
+@dataclass
+class DiffArgs:
+    log: str
+    command: str
+    metadata: bool
+    base_result: TextIOWrapper
+    changed_result: TextIOWrapper
+    output: TextIOWrapper
+
+
+def get_args() -> Union[TestArgs, DiffArgs]:
+    """Define, parse and return command line args.
 
     Returns:
         A dict containing the command line args.
     """
-    args = _parser.parse_args()
-    tool_args = ToolArgs(log=args.log,
-                         command=args.command,
-                         config=args.config_path,
-                         output=args.output_path)
-    return tool_args
+    parser = argparse.ArgumentParser(
+        description=
+        'Run performance tests against the OpenSearch plugin and various ANN libaries.'
+    )
+
+    def define_args():
+        """Define tool commands."""
+
+        # add log level arg
+        parser.add_argument(
+            '--log',
+            default='info',
+            type=str,
+            choices=['debug',
+                     'info',
+                     'warning',
+                     'error',
+                     'critical'],
+            help='Log level of the tool.'
+        )
+
+        subparsers = parser.add_subparsers(
+            title='commands',
+            dest='command',
+            help='sub-command help'
+        )
+        subparsers.required = True
+
+        # add subcommands
+        _add_test_cmd(subparsers)
+        _add_diff_cmd(subparsers)
+
+    define_args()
+    args = parser.parse_args()
+    if args.command == 'test':
+        return TestArgs(
+            log=args.log,
+            command=args.command,
+            config=args.config,
+            output=args.output
+        )
+    else:
+        return DiffArgs(
+            log=args.log,
+            command=args.command,
+            metadata=args.metadata,
+            base_result=args.base_result,
+            changed_result=args.changed_result,
+            output=args.output
+        )

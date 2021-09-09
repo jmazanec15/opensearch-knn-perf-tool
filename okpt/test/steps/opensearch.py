@@ -19,12 +19,13 @@
 Some of the OpenSearch operations return a `took` field in the response body,
 so the profiling decorators aren't needed for some functions.
 """
-from okpt.test.steps import base
 from typing import Any, Dict, List, cast
 
 import elasticsearch
-import numpy as np
 import h5py
+import numpy as np
+
+from okpt.test.steps import base
 
 
 class CreateIndexStep(base.Step):

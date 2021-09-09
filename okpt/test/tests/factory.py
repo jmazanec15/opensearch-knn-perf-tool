@@ -15,8 +15,10 @@
 # specific language governing permissions and limitations
 # under the License.
 """Provides a factory class for tests."""
-from okpt.test.tests import base as base_t, opensearch, nmslib
-from okpt.io.config.parsers import tool, base as base_p
+from okpt.io.config.parsers import base as base_p
+from okpt.io.config.parsers import tool
+from okpt.test.tests import base as base_t
+from okpt.test.tests import nmslib, opensearch
 
 _tests = {
     'opensearch_index': opensearch.OpenSearchIndexTest,

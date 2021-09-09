@@ -16,19 +16,19 @@
 # under the License.
 """ Runner script that serves as the main controller of the testing tool."""
 
-import json
 import logging
 import sys
+from typing import cast
 
+from okpt.diff import diff
 from okpt.io import args
-from okpt.io.config.parsers import base, tool
-from okpt.io.utils.writer import write_json
+from okpt.io.config.parsers import tool
+from okpt.io.utils import reader, writer
 from okpt.test import runner
 
 
 def main():
     """Main function of entry module."""
-    args.define_args()
     cli_args = args.get_args()
     output = cli_args.output
     if cli_args.log:
@@ -36,20 +36,32 @@ def main():
         logging.basicConfig(level=log_level)
 
     if cli_args.command == 'test':
-        try:
-            parser = tool.ToolParser()
-            tool_config = parser.parse(cli_args.config)
-            logging.info('Configs are valid.')
+        cli_args = cast(args.TestArgs, cli_args)
 
-            test_runner = runner.TestRunner(tool_config=tool_config)
-            test_result = test_runner.execute()
-            logging.debug(f'Test Result:\n {json.dumps(test_result, indent=2)}')
-            write_json(data=test_result, file=output)
-        except base.ConfigurationError as e:
-            logging.error(e.message)
-            sys.exit(1)
+        # parse configs
+        parser = tool.ToolParser()
+        tool_config = parser.parse(cli_args.config)
+        logging.info('Configs are valid.')
 
+        # run tests
+        test_runner = runner.TestRunner(tool_config=tool_config)
+        test_result = test_runner.execute()
+
+        # write test results
+        logging.debug(
+            f'Test Result:\n {writer.write_json(test_result, sys.stdout, pretty=True)}'
+        )
+        writer.write_json(test_result, output, pretty=True)
+    elif cli_args.command == 'diff':
+        cli_args = cast(args.DiffArgs, cli_args)
+
+        # parse test results
+        base_result = reader.parse_json(cli_args.base_result)
+        changed_result = reader.parse_json(cli_args.changed_result)
+
+        # get diff
+        diff_result = diff.Diff(base_result, changed_result,
+                                cli_args.metadata).diff()
+        writer.write_json(data=diff_result, file=output, pretty=True)
     elif cli_args.command == 'plot':
-        pass  # TODO
-    elif cli_args.command == 'compare':
         pass  # TODO
