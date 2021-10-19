@@ -29,6 +29,7 @@ from okpt.io.utils import reader
 
 @dataclass
 class OpenSearchConfig:
+    endpoint: str
     index_spec: Dict[str, Any]
     max_num_segments: int
     index_thread_qty: int
@@ -51,6 +52,7 @@ class OpenSearchParser(base.BaseParser):
         index_spec_path = config_obj['index_spec']
         index_spec_obj = reader.parse_json_from_path(index_spec_path)
         opensearch_config = OpenSearchConfig(
+            endpoint=config_obj['endpoint'],
             index_spec=index_spec_obj,
             max_num_segments=config_obj['max_num_segments'],
             index_thread_qty=config_obj['index_thread_qty'],

@@ -32,10 +32,15 @@ class OpenSearchTest(base.Test):
         super().__init__(service_config, dataset)
 
         self.index_name = 'test_index'
+
+        # TODO: fix for security in the future
+        # assume that port is 80 unless localhost is set
+        port = 9200 if service_config.endpoint == "localhost" else 80
+
         self.es = Elasticsearch(
             hosts=[{
-                'host': 'localhost',
-                'port': 9200
+                'host': service_config.endpoint,
+                'port': port
             }],
             use_ssl=False,
             verify_certs=False,

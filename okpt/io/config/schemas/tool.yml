@@ -21,7 +21,7 @@ test_parameters:
     num_runs:
       type: integer
       min: 1
-      max: 10
+      max: 10000
     show_runs:
       type: boolean
       default: False
