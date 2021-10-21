@@ -16,9 +16,17 @@
 # under the License.
 """Provides base Step interface."""
 
+from dataclasses import dataclass
 from typing import Any, Dict, List
 
 from okpt.test import profile
+
+
+@dataclass
+class StepConfig:
+    step_name: str
+    config: Dict[str, object]
+    implicit_config: Dict[str, object]
 
 
 class Step:
@@ -35,11 +43,14 @@ class Step:
     label = 'base_step'
     measures: List[str] = []
 
+    def __init__(self, step_config: StepConfig):
+        self.step_config = step_config
+
     def _action(self):
         """Step logic/behavior to be executed and profiled."""
         pass
 
-    def execute(self, *args, **kwargs) -> Dict[str, Any]:
+    def execute(self) -> List[Dict[str, Any]]:
         """Execute step logic while profiling various measures.
 
         Returns:
@@ -50,7 +61,9 @@ class Step:
         for measure in self.measures:
             action = getattr(profile, measure)(action)
 
-        result = action(*args, **kwargs)
+        result = action()
+        if isinstance(result, list):
+            return result
         if isinstance(result, dict):
-            return {'label': self.label, **result}
-        return {'label': self.label}
+            return [{'label': self.label, **result}]
+        return [{'label': self.label}]

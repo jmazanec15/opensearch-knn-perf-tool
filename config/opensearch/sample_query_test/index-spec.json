@@ -1,0 +1,28 @@
+{
+  "settings": {
+    "index": {
+      "knn": true,
+      "knn.algo_param.ef_search": 100,
+      "refresh_interval": -1,
+      "number_of_shards": 1,
+      "number_of_replicas": 0
+    }
+  },
+  "mappings": {
+    "properties": {
+      "test_vector_2": {
+        "type": "knn_vector",
+        "dimension": 16,
+        "method": {
+          "name": "hnsw",
+          "space_type": "l2",
+          "engine": "nmslib",
+          "parameters": {
+            "ef_construction": 5,
+            "m": 5
+          }
+        }
+      }
+    }
+  }
+}

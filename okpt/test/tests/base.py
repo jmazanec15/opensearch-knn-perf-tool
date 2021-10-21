@@ -18,7 +18,31 @@
 from math import floor
 from typing import Any, Dict, List
 
-from okpt.io.config.parsers import tool
+from okpt.io.config.parsers.test import TestConfig
+from okpt.test.steps.base import Step
+
+
+def get_avg(values: List[Any]):
+    """Get average value of a list.
+
+    Args:
+        values: A list of values.
+
+    Returns:
+        The average value in the list.
+    """
+    valid_total = len(values)
+    running_sum = 0.0
+
+    for value in values:
+        if value == -1:
+            valid_total -= 1
+            continue
+        running_sum += value
+
+    if valid_total == 0:
+        return -1
+    return running_sum / valid_total
 
 
 def _pxx(values: List[Any], p: float):
@@ -37,14 +61,14 @@ def _pxx(values: List[Any], p: float):
     # return -1 if p is out of range or if the list doesn't have enough elements
     # to support the specified percentile
     if p < 0 or p > 1:
-        return -1
+        return -1.0
     elif p < lowest_percentile or p > highest_percentile:
-        return -1
+        return -1.0
     else:
-        return values[floor(len(values) * p)]
+        return float(values[floor(len(values) * p)])
 
 
-def _aggregate_steps(steps: List[Dict[str, Any]], measure_labels=['took']):
+def _aggregate_steps(step_results: List[Dict[str, Any]], measure_labels=['took']):
     """Aggregates the steps for a given Test.
 
     The aggregation process extracts the measures from each step and calculates
@@ -78,7 +102,7 @@ def _aggregate_steps(steps: List[Dict[str, Any]], measure_labels=['took']):
     step_measures: Dict[str, Any] = {}
 
     # iterate over all test steps
-    for step in steps:
+    for step in step_results:
         step_label = step['label']
 
         # iterate over all measures in each test step
@@ -99,7 +123,7 @@ def _aggregate_steps(steps: List[Dict[str, Any]], measure_labels=['took']):
     # calculate the totals and percentile statistics for each step measure
     for step_measure_label, step_measure in step_measures.items():
         step_measure.sort()
-        aggregate[step_measure_label + '_total'] = sum(step_measure)
+        aggregate[step_measure_label + '_total'] = float(sum(step_measure))
         aggregate[step_measure_label + '_p50'] = _pxx(step_measure, 0.50)
         aggregate[step_measure_label + '_p90'] = _pxx(step_measure, 0.90)
         aggregate[step_measure_label + '_p99'] = _pxx(step_measure, 0.99)
@@ -107,7 +131,7 @@ def _aggregate_steps(steps: List[Dict[str, Any]], measure_labels=['took']):
     return aggregate
 
 
-class Test():
+class Test:
     """A base Test class, representing a collection of steps to profiled and aggregated.
 
     Methods:
@@ -116,27 +140,26 @@ class Test():
         cleanup: Perform test cleanup. Useful for clearing the state of a persistent process like OpenSearch.
         execute: Runs steps, cleans up, and aggregates the test result.
     """
-    def __init__(self, service_config, dataset: tool.Dataset):
+    def __init__(self, test_config: TestConfig):
         """Initializes the test state.
-
-        Args:
-            service_config: Config of respective k-NN service.
-            dataset: Dataset of vectors to use for testing.
         """
-        self.service_config = service_config
-        self.dataset = dataset
-        self.step_results: List[Dict[str, Any]] = []
+        self.test_config = test_config
+        self.setup_steps: List[Step] = test_config.setup
+        self.test_steps: List[Step] = test_config.steps
+        self.cleanup_steps: List[Step] = test_config.cleanup
 
     def setup(self):
-        pass
+        [step.execute() for step in self.setup_steps]
 
     def _run_steps(self):
-        pass
+        step_results = list()
+        [step_results.extend(step.execute()) for step in self.test_steps]
+        return step_results
 
     def _cleanup(self):
-        pass
+        [step.execute() for step in self.cleanup_steps]
 
     def execute(self):
-        self._run_steps()
+        results = self._run_steps()
         self._cleanup()
-        return _aggregate_steps(self.step_results)
+        return _aggregate_steps(results)

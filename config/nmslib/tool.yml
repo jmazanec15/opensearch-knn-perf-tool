@@ -1,8 +1,0 @@
-test_name: nmslib_test
-test_id: nmslib_index
-knn_service: nmslib
-service_config: config/nmslib/service.yml
-dataset: dataset/data.hdf5
-dataset_format: hdf5
-test_parameters:
-  num_runs: 10

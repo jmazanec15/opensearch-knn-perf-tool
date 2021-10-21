@@ -43,7 +43,16 @@ class ConfigurationError(Exception):
         super().__init__(self.message)
 
 
-class BaseParser():
+def _get_validator_from_schema_name(schema_name: str):
+    """Get the corresponding Cerberus validator from a schema name."""
+    curr_file_dir = os.path.dirname(os.path.abspath(__file__))
+    schemas_dir = os.path.join(os.path.dirname(curr_file_dir), 'schemas')
+    schema_file_path = os.path.join(schemas_dir, f'{schema_name}.yml')
+    schema_obj = reader.parse_yaml_from_path(schema_file_path)
+    return cerberus.Validator(schema_obj)
+
+
+class BaseParser:
     """Base class for config parsers.
 
     Attributes:
@@ -55,16 +64,8 @@ class BaseParser():
     """
 
     def __init__(self, schema_name: str):
-        self.validator = self._get_validator_from_schema_name(schema_name)
+        self.validator = _get_validator_from_schema_name(schema_name)
         self.errors = ''
-
-    def _get_validator_from_schema_name(self, schema_name: str):
-        """Get the corresponding Cerberus validator from a schema name."""
-        curr_file_dir = os.path.dirname(os.path.abspath(__file__))
-        schemas_dir = os.path.join(os.path.dirname(curr_file_dir), 'schemas')
-        schema_file_path = os.path.join(schemas_dir, f'{schema_name}.yml')
-        schema_obj = reader.parse_yaml_from_path(schema_file_path)
-        return cerberus.Validator(schema_obj)
 
     def parse(self, file_obj: TextIOWrapper):
         """Convert file object to dict, while validating against config schema."""

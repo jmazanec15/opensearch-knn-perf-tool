@@ -1,8 +1,0 @@
-test_name: opensearch_test
-test_id: opensearch_index
-knn_service: opensearch
-service_config: config/opensearch/service.yml
-dataset: dataset/data.hdf5
-dataset_format: hdf5
-test_parameters:
-  num_runs: 10

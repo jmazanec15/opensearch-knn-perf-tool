@@ -22,7 +22,7 @@ from typing import cast
 
 from okpt.diff import diff
 from okpt.io import args
-from okpt.io.config.parsers import tool
+from okpt.io.config.parsers import test
 from okpt.io.utils import reader, writer
 from okpt.test import runner
 
@@ -38,13 +38,13 @@ def main():
     if cli_args.command == 'test':
         cli_args = cast(args.TestArgs, cli_args)
 
-        # parse configs
-        parser = tool.ToolParser()
-        tool_config = parser.parse(cli_args.config)
+        # parse config
+        parser = test.TestParser()
+        test_config = parser.parse(cli_args.config)
         logging.info('Configs are valid.')
 
         # run tests
-        test_runner = runner.TestRunner(tool_config=tool_config)
+        test_runner = runner.TestRunner(test_config=test_config)
         test_result = test_runner.execute()
 
         # write test results

@@ -15,7 +15,6 @@
 # specific language governing permissions and limitations
 # under the License.
 """Provides a test runner class."""
-import dataclasses
 import logging
 import platform
 import sys
@@ -24,20 +23,8 @@ from typing import Any, Dict, List
 
 import psutil
 
-from okpt.io.config.parsers import tool
-from okpt.test.tests import factory
-
-
-def _get_avg(values: List[Any]):
-    """Get average value of a list.
-
-    Args:
-        values: A list of values.
-
-    Returns:
-        The average value in the list.
-    """
-    return sum(values) / len(values)
+from okpt.io.config.parsers import test
+from okpt.test.tests.base import Test, get_avg
 
 
 def _aggregate_runs(runs: List[Dict[str, Any]]):
@@ -58,30 +45,30 @@ def _aggregate_runs(runs: List[Dict[str, Any]]):
             else:
                 aggregate[key] = [value]
 
-    aggregate = {key: _get_avg(value) for key, value in aggregate.items()}
+    aggregate = {key: get_avg(value) for key, value in aggregate.items()}
     return aggregate
 
 
-class TestRunner():
+class TestRunner:
     """Test runner class for running tests and aggregating the results.
 
     Methods:
         execute: Run the tests and aggregate the results.
     """
 
-    def __init__(self, tool_config: tool.ToolConfig):
+    def __init__(self, test_config: test.TestConfig):
         """"Initializes test state and chooses the appropriate Test."""
-        self.tool_config = tool_config
-        self.test = factory.TestFactory(self.tool_config)
+        self.test_config = test_config
+        self.test = Test(test_config)
 
     def _get_metadata(self):
         """"Retrieves the test metadata."""
         svmem = psutil.virtual_memory()
         return {
             'test_name':
-                self.tool_config.test_name,
+                self.test_config.test_name,
             'test_id':
-                self.tool_config.test_id,
+                self.test_config.test_id,
             'date':
                 datetime.now().strftime('%m/%d/%Y %H:%M:%S'),
             'python_version':
@@ -106,9 +93,9 @@ class TestRunner():
         self.test.setup()
         logging.info('Beginning to run tests.')
         runs = []
-        for i in range(self.tool_config.test_parameters.num_runs):
+        for i in range(self.test_config.num_runs):
             logging.info(
-                f'Running test {i + 1} of {self.tool_config.test_parameters.num_runs}'
+                f'Running test {i + 1} of {self.test_config.num_runs}'
             )
             runs.append(self.test.execute())
 
@@ -116,17 +103,15 @@ class TestRunner():
         aggregate = _aggregate_runs(runs)
 
         # add metadata to test results
-        tool_result = {
+        test_result = {
             'metadata':
                 self._get_metadata(),
             'results':
-                aggregate,
-            'test_parameters':
-                dataclasses.asdict(self.tool_config.test_parameters)
+                aggregate
         }
 
         # include info about all test runs if specified in config
-        if self.tool_config.test_parameters.show_runs:
-            tool_result['runs'] = runs
+        if self.test_config.show_runs:
+            test_result['runs'] = runs
 
-        return tool_result
+        return test_result
