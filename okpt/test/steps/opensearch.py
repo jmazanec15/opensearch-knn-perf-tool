@@ -254,11 +254,12 @@ class BulkIndexStep(OpenSearchStep):
 
     def _action(self):
         results = []
-        action = {'index': {'_index': self.index_name}}
+        def action(doc_id): return {'index': {'_index': self.index_name, "_id": doc_id}}
+
         i = 0
         while i < self.dataset.train.len():
             partition = cast(np.ndarray, self.dataset.train[i:i + self.bulk_size])
-            body = bulk_transform(partition, self.field_name, action)
+            body = bulk_transform(partition, self.field_name, action, i)
             bulk_step_config = StepConfig("bulk_add", {"index_name": self.index_name, "body": body},
                                           self.implicit_config)
             result = BulkStep(bulk_step_config).execute()
@@ -309,17 +310,67 @@ class BatchQueryIndex(OpenSearchStep):
         return results
 
 
+class QueryRecallStep(OpenSearchStep):
+
+    label = "batch_query_recall"
+
+    def __init__(self, step_config: StepConfig):
+        super().__init__(step_config)
+        self.k = parse_int_param("k", step_config.config, {}, 100)
+        self.index_name = parse_string_param("index_name", step_config.config, {}, None)
+        self.field_name = parse_string_param("field_name", step_config.config, {}, None)
+        dataset_format = parse_string_param("dataset_format", step_config.config, {}, "hdf5")
+        dataset_path = parse_string_param("dataset_path", step_config.config, {}, None)
+        self.dataset = parse_dataset(dataset_path, dataset_format)
+        self.implicit_config = step_config.implicit_config
+
+    def _action(self):
+        def get_body(vec): return {
+            'size': self.k,
+            'query': {
+                'knn': {
+                    self.field_name: {
+                        'vector': vec,
+                        'k': self.k
+                    }
+                }
+            }
+        }
+
+        results = list()
+        for v in self.dataset.test:
+            query_test_config = StepConfig(
+                "query_index",
+                {
+                    "index_name": self.index_name,
+                    "body": get_body(v),
+                },
+                self.implicit_config
+            )
+
+            results.append([int(result["_id"]) for result in QueryIndexStep(query_test_config).execute()[0]["hits"]["hits"]])
+
+        recall_at_1 = recall_at_r(results, self.dataset.neighbors, 1, self.k)
+        recall_at_k = recall_at_r(results, self.dataset.neighbors, self.k, self.k)
+        return {
+            "recall@1": recall_at_1,
+            "recall@K": recall_at_k
+        }
+
+
 # Helper functions - (AKA not steps)
-def bulk_transform(partition: np.ndarray, field_name: str, action=Dict[str, Any]) -> List[Dict[str, Any]]:
+def bulk_transform(partition: np.ndarray, field_name: str, action, offset: int) -> List[Dict[str, Any]]:
     """Partitions and transforms a list of vectors into OpenSearch's bulk injection format.
     Args:
+        offset: to start counting from
         partition: An array of vectors to transform.
         field_name: field name for action
         action: Bulk API action.
     Returns:
         An array of transformed vectors in bulk format.
     """
-    actions = [action, None] * len(partition)
+    actions = list()
+    [actions.extend([action(i + offset), None]) for i in range(len(partition))]
     actions[1::2] = [{field_name: vec} for vec in partition.tolist()]
     return actions
 
@@ -363,3 +414,14 @@ def get_opensearch_endpoint(endpoint: str, port: int):
         connection_class=RequestsHttpConnection,
         timeout=60,
     )
+
+
+def recall_at_r(results, ground_truth_set, r, k):
+    correct = 0.0
+    for i, true_neighbors in enumerate(ground_truth_set):
+        true_neighbors_set = set(true_neighbors[:k])
+        for j in range(r):
+            if results[i][j] in true_neighbors_set:
+                correct += 1.0
+
+    return correct / (r * len(ground_truth_set))

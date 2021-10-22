@@ -27,13 +27,17 @@ from okpt.io.config.parsers.base import ConfigurationError
 class Dataset:
     train: h5py.Dataset
     test: h5py.Dataset
+    neighbors: h5py.Dataset
+    distances: h5py.Dataset
 
 
 def parse_dataset(dataset_path: str, dataset_format: str) -> Union[Dataset]:
     if dataset_format == 'hdf5':
         file = h5py.File(dataset_path)
         return Dataset(train=cast(h5py.Dataset, file['train']),
-                       test=cast(h5py.Dataset, file['test']))
+                       test=cast(h5py.Dataset, file['test']),
+                       neighbors=cast(h5py.Dataset, file['neighbors']),
+                       distances=cast(h5py.Dataset, file['distances']))
     else:
         raise Exception()
 

@@ -1,0 +1,25 @@
+test_name: opensearch_test
+test_id: "Example query recall workload test"
+num_runs: 10
+show_runs: false
+setup:
+  - name: delete_index
+    index_name: test_index
+  - name: create_index
+    index_name: test_index
+    index_spec: config/opensearch/sample_query_test/index-spec.json
+  - name: bulk_index
+    index_name: test_index
+    field_name: test_vector_2
+    bulk_size: 20
+    dataset_format: hdf5
+    dataset_path: dataset/data.hdf5
+  - name: refresh_index
+    index_name: test_index
+steps:
+  - name: batch_query_recall
+    k: 10
+    index_name: test_index
+    field_name: test_vector_2
+    dataset_format: hdf5
+    dataset_path: dataset/data.hdf5
