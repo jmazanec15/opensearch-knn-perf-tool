@@ -1,0 +1,52 @@
+test_name: opensearch_train_recall_test
+test_id: "Example query workload test for train index with recall"
+num_runs: 5
+show_runs: true
+setup:
+  - name: delete_model
+    model_id: jack_perf_test
+  - name: delete_index
+    index_name: target_index
+  - name: delete_index
+    index_name: train_index
+  - name: create_index
+    index_name: train_index
+    index_spec: config/opensearch/sample_train_recall_test/train-index-spec.json
+  - name: bulk_index
+    index_name: train_index
+    field_name: train_field
+    bulk_size: 500
+    dataset_format: hdf5
+    dataset_path: dataset/data.hdf5
+  - name: refresh_index
+    index_name: train_index
+  - name: train_model
+    model_id: jack_perf_test
+    train_index: train_index
+    train_field: train_field
+    dimension: 784
+    method_spec: config/opensearch/sample_train_test/method-spec.json
+    max_training_vector_count: 10000
+  - name: create_index
+    index_name: target_index
+    index_spec: config/opensearch/sample_train_recall_test/target-index-spec.json
+  - name: bulk_index
+    index_name: target_index
+    field_name: target_field
+    bulk_size: 500
+    dataset_format: hdf5
+    dataset_path: dataset/data.hdf5
+  - name: refresh_index
+    index_name: target_index
+steps:
+  - name: batch_query_recall
+    k: 100
+    index_name: target_index
+    field_name: target_field
+    dataset_format: hdf5
+    dataset_path: dataset/data.hdf5
+cleanup:
+  - name: delete_model
+    model_id: jack_perf_test
+  - name: delete_index
+    index_name: target_index

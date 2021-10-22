@@ -7,7 +7,7 @@ setup:
     index_name: test_index
   - name: create_index
     index_name: test_index
-    index_spec: config/opensearch/sample_query_test/index-spec.json
+    index_spec: config/opensearch/sample_query_recall_test/index-spec.json
   - name: bulk_index
     index_name: test_index
     field_name: test_vector_2

@@ -160,6 +160,7 @@ class TrainModelStep(OpenSearchStep):
         self.train_index_field = parse_string_param("train_field", step_config.config, {}, None)
         self.dimension = parse_int_param("dimension", step_config.config, {}, None)
         self.description = parse_string_param("description", step_config.config, {}, "Default")
+        self.max_training_vector_count = parse_int_param("max_training_vector_count", step_config.config, {}, 10000000000000)
 
         method_spec = parse_string_param("method_spec", step_config.config, {}, None)
         self.method = parse_json_from_path(method_spec)
@@ -179,7 +180,8 @@ class TrainModelStep(OpenSearchStep):
             "training_field": self.train_index_field,
             "description": self.description,
             "dimension": self.dimension,
-            "method": self.method
+            "method": self.method,
+            "max_training_vector_count": self.max_training_vector_count
         }
 
         # So, we trained the model. Now we need to wait until we have to wait until the model is created. Poll every

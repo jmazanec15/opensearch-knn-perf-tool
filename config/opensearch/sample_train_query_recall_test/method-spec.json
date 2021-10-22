@@ -1,0 +1,16 @@
+{
+  "name":"ivf",
+  "engine":"faiss",
+  "space_type": "l2",
+  "parameters":{
+    "nlist":16,
+    "nprobes":16,
+    "encoder":{
+      "name":"pq",
+      "parameters":{
+        "code_size":8,
+        "code_count": 8
+      }
+    }
+  }
+}
