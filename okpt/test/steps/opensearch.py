@@ -268,6 +268,11 @@ class BulkIndexStep(OpenSearchStep):
             results.extend(result)
             i += self.bulk_size
 
+        # TODO: Clean this up
+        size_in_kb = get_index_size_in_kb(self.es, self.index_name)
+        for i in range(len(results)):
+            results[i]["store_kb"] = size_in_kb
+
         return results
 
 
@@ -309,6 +314,12 @@ class BatchQueryIndex(OpenSearchStep):
                 self.implicit_config
             )
             results.extend(QueryIndexStep(query_test_config).execute())
+
+        # TODO: Clean this up
+        size_in_kb = get_cache_size_in_kb(self.endpoint, 80)
+        for i in range(len(results)):
+            results[i]["memory_kb"] = size_in_kb
+
         return results
 
 
@@ -427,3 +438,24 @@ def recall_at_r(results, ground_truth_set, r, k):
                 correct += 1.0
 
     return correct / (r * len(ground_truth_set))
+
+
+def get_index_size_in_kb(es, index_name):
+    #TODO: Clean this up
+    return int(es.indices.stats(index_name, metric="store")["indices"][index_name]["total"]["store"]["size_in_bytes"]) / 1024
+
+
+def get_cache_size_in_kb(endpoint, port):
+    #TODO: Clean this up
+    response = requests.get(
+        "http://" + endpoint + ":" + str(port) + "/_plugins/_knn/stats",
+        headers={"content-type": "application/json"})
+    stats = response.json()
+
+    keys = stats["nodes"].keys()
+
+    total_used = 0
+    for key in keys:
+        total_used += int(stats["nodes"][key]["graph_memory_usage"])
+    return total_used
+
