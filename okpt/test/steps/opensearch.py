@@ -117,14 +117,37 @@ class RefreshIndexStep(OpenSearchStep):
     """See base class."""
 
     label = 'refresh_index'
-    measures = ['took']
 
     def __init__(self, step_config: StepConfig):
         super().__init__(step_config)
         self.index_name = parse_string_param("index_name", step_config.config, {}, None)
 
     def _action(self):
-        return self.es.indices.refresh(index=self.index_name)
+        while True:
+            try:
+                self.es.indices.refresh(index=self.index_name)
+                return {}
+            except:
+                pass
+
+
+class ForceMergeStep(OpenSearchStep):
+    """See base class."""
+
+    label = 'force_merge'
+
+    def __init__(self, step_config: StepConfig):
+        super().__init__(step_config)
+        self.index_name = parse_string_param("index_name", step_config.config, {}, None)
+        self.max_num_segments = parse_int_param("max_num_segments", step_config.config, {}, None)
+
+    def _action(self):
+        while True:
+            try:
+                self.es.indices.forcemerge(index=self.index_name, max_num_segments=self.max_num_segments)
+                return {}
+            except:
+                pass
 
 
 class QueryIndexStep(OpenSearchStep):

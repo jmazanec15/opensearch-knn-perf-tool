@@ -21,7 +21,8 @@ from okpt.test.steps.base import Step, StepConfig
 
 # TODO: These should be prefixed with "OpenSearch"
 from okpt.test.steps.opensearch import CreateIndexStep, DisableRefreshStep, BulkStep, RefreshIndexStep, \
-    DeleteIndexStep, TrainModelStep, QueryIndexStep, BulkIndexStep, BatchQueryIndex, DeleteModelStep, QueryRecallStep
+    DeleteIndexStep, TrainModelStep, QueryIndexStep, BulkIndexStep, BatchQueryIndex, DeleteModelStep, QueryRecallStep, \
+    ForceMergeStep
 
 
 def create_step(step_config: StepConfig) -> Step:
@@ -47,5 +48,7 @@ def create_step(step_config: StepConfig) -> Step:
         return BatchQueryIndex(step_config)
     elif step_config.step_name == QueryRecallStep.label:
         return QueryRecallStep(step_config)
+    elif step_config.step_name == ForceMergeStep.label:
+        return ForceMergeStep(step_config)
 
     raise ConfigurationError("Invalid step {}".format(step_config.step_name))
