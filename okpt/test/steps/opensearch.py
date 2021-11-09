@@ -110,7 +110,7 @@ class BulkStep(OpenSearchStep):
         Returns:
             An OpenSearch bulk response body.
         """
-        return self.es.bulk(index=self.index_name, body=self.body)
+        return self.es.bulk(index=self.index_name, body=self.body, timeout="5m")
 
 
 class RefreshIndexStep(OpenSearchStep):
