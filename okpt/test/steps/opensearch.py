@@ -117,6 +117,7 @@ class RefreshIndexStep(OpenSearchStep):
     """See base class."""
 
     label = 'refresh_index'
+    measures = ['took']
 
     def __init__(self, step_config: StepConfig):
         super().__init__(step_config)
@@ -126,7 +127,7 @@ class RefreshIndexStep(OpenSearchStep):
         while True:
             try:
                 self.es.indices.refresh(index=self.index_name)
-                return {}
+                return dict()
             except:
                 pass
 
@@ -135,6 +136,7 @@ class ForceMergeStep(OpenSearchStep):
     """See base class."""
 
     label = 'force_merge'
+    measures = ['took']
 
     def __init__(self, step_config: StepConfig):
         super().__init__(step_config)
@@ -145,7 +147,7 @@ class ForceMergeStep(OpenSearchStep):
         while True:
             try:
                 self.es.indices.forcemerge(index=self.index_name, max_num_segments=self.max_num_segments)
-                return {}
+                return dict()
             except:
                 pass
 
