@@ -217,7 +217,7 @@ class TrainModelStep(OpenSearchStep):
             headers={"content-type": "application/json"})
 
         sleep_time = 0.1
-        timeout = 6000
+        timeout = 100000
         i = 0
         while i < timeout:
             time.sleep(sleep_time)
