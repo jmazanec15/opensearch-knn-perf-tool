@@ -24,7 +24,7 @@ from typing import Any, Dict, List
 import psutil
 
 from okpt.io.config.parsers import test
-from okpt.test.tests.base import Test, get_avg
+from okpt.test.test import Test, get_avg
 
 
 def _aggregate_runs(runs: List[Dict[str, Any]]):
@@ -57,7 +57,7 @@ class TestRunner:
     """
 
     def __init__(self, test_config: test.TestConfig):
-        """"Initializes test state and chooses the appropriate Test."""
+        """"Initializes test state."""
         self.test_config = test_config
         self.test = Test(test_config)
 

@@ -63,5 +63,3 @@ def main():
         diff_result = diff.Diff(base_result, changed_result,
                                 cli_args.metadata).diff()
         writer.write_json(data=diff_result, file=output, pretty=True)
-    elif cli_args.command == 'plot':
-        pass  # TODO

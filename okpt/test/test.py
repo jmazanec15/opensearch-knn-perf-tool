@@ -68,7 +68,7 @@ def _pxx(values: List[Any], p: float):
         return float(values[floor(len(values) * p)])
 
 
-def _aggregate_steps(step_results: List[Dict[str, Any]], measure_labels=['took', 'recall@1', 'recall@K', 'store_kb', "memory_kb"]):
+def _aggregate_steps(step_results: List[Dict[str, Any]]):
     """Aggregates the steps for a given Test.
 
     The aggregation process extracts the measures from each step and calculates
@@ -95,6 +95,8 @@ def _aggregate_steps(step_results: List[Dict[str, Any]], measure_labels=['took',
     Returns:
         A complete test result.
     """
+    #, measure_labels=['took', 'recall@1', 'recall@K', 'store_kb', "memory_kb"]
+    #TODO: I think we should refactor this a little bit.
     test_measures = {
         f'test_{measure_label}': 0
         for measure_label in measure_labels
@@ -137,7 +139,8 @@ class Test:
     Methods:
         setup: Performs test setup. Usually for steps not intended to be profiled.
         run_steps: Runs the test steps, aggregating the results into the `step_results` instance field.
-        cleanup: Perform test cleanup. Useful for clearing the state of a persistent process like OpenSearch.
+        cleanup: Perform test cleanup. Useful for clearing the state of a persistent process like OpenSearch. Cleanup
+                    steps are executed after each run.
         execute: Runs steps, cleans up, and aggregates the test result.
     """
     def __init__(self, test_config: TestConfig):

@@ -44,7 +44,7 @@ class OpenSearchStep(base.Step):
         self.endpoint = parse_string_param("endpoint", step_config.config, step_config.implicit_config, "localhost")
         default_port = 9200 if self.endpoint == "localhost" else 80
         self.port = parse_int_param("port", step_config.config, step_config.implicit_config, default_port)
-        self.opensearch = get_opensearch_endpoint(str(self.endpoint), int(self.port))
+        self.opensearch = get_opensearch_client(str(self.endpoint), int(self.port))
 
 
 class CreateIndexStep(OpenSearchStep):
@@ -67,8 +67,7 @@ class CreateIndexStep(OpenSearchStep):
         Returns:
             An OpenSearch index creation response body.
         """
-        return self.opensearch.indices.create(index=self.index_name,
-                                      body=self.body)
+        return self.opensearch.indices.create(index=self.index_name, body=self.body)
 
 
 class DisableRefreshStep(OpenSearchStep):
@@ -418,15 +417,20 @@ def delete_index(opensearch: OpenSearch, index_name: str):
     Args:
         opensearch: An OpenSearch client.
         index_name: Name of the OpenSearch index to be deleted.
-
-    Returns:
-        An OpenSearch index deletion response body.
     """
     opensearch.indices.delete(index=index_name, ignore=[400, 404])
 
 
 def get_model(endpoint, port, model_id):
-    # TODO: Major cleanup
+    """
+    Retrieve a model from an OpenSearch cluster
+    Args:
+        endpoint: Endpoint OpenSearch is running on
+        port: Port OpenSearch is running on
+        model_id: ID of model to be deleted
+    Returns:
+        Get model response
+    """
     response = requests.get(
         "http://" + endpoint + ":" + str(port) + "/_plugins/_knn/models/" + model_id,
         headers={"content-type": "application/json"})
@@ -434,14 +438,31 @@ def get_model(endpoint, port, model_id):
 
 
 def delete_model(endpoint, port, model_id):
-    # TODO: Major cleanup
+    """
+    Deletes a model from OpenSearch cluster
+    Args:
+        endpoint: Endpoint OpenSearch is running on
+        port: Port OpenSearch is running on
+        model_id: ID of model to be deleted
+    Returns:
+        Deleted model response
+    """
     response = requests.delete(
         "http://" + endpoint + ":" + str(port) + "/_plugins/_knn/models/" + model_id,
         headers={"content-type": "application/json"})
     return response.json()
 
 
-def get_opensearch_endpoint(endpoint: str, port: int):
+def get_opensearch_client(endpoint: str, port: int):
+    """
+    Get an opensearch client from an endpoint and port
+    Args:
+        endpoint: Endpoint OpenSearch is running on
+        port: Port OpenSearch is running on
+    Returns:
+        OpenSearch client
+
+    """
     # TODO: fix for security in the future
     return OpenSearch(
         hosts=[{
@@ -456,6 +477,17 @@ def get_opensearch_endpoint(endpoint: str, port: int):
 
 
 def recall_at_r(results, ground_truth_set, r, k):
+    """
+    Calculates the recall@R for a set of queries against a ground truth nearest neighbor set
+    Args:
+        results: 2D list containing ids of results returned by OpenSearch. results[i][j] i refers to query, j refers to
+            result in the query
+        ground_truth_set: 2D list containing ids of the true nearest neighbors for a set of queries
+        r: number of top results to check if they are in the ground truth k-NN set.
+        k: k value for the query
+    Returns:
+        Recall at R
+    """
     correct = 0.0
     for i, true_neighbors in enumerate(ground_truth_set):
         true_neighbors_set = set(true_neighbors[:k])
@@ -467,12 +499,27 @@ def recall_at_r(results, ground_truth_set, r, k):
 
 
 def get_index_size_in_kb(opensearch, index_name):
-    #TODO: Clean this up
-    return int(opensearch.indices.stats(index_name, metric="store")["indices"][index_name]["total"]["store"]["size_in_bytes"]) / 1024
+    """
+    Gets the size of an index in kilobytes
+    Args:
+        opensearch: opensearch client
+        index_name: name of index to look up
+    Returns:
+        size of index in kilobytes
+    """
+    return int(opensearch.indices.stats(index_name, metric="store")["indices"][index_name]["total"]["store"]
+               ["size_in_bytes"]) / 1024
 
 
 def get_cache_size_in_kb(endpoint, port):
-    #TODO: Clean this up
+    """
+    Gets the size of the k-NN cache in kilobytes
+    Args:
+        endpoint: endpoint of OpenSearch cluster
+        port: port of endpoint OpenSearch is running on
+    Returns:
+        size of cache in kilobytes
+    """
     response = requests.get(
         "http://" + endpoint + ":" + str(port) + "/_plugins/_knn/stats",
         headers={"content-type": "application/json"})
@@ -484,4 +531,3 @@ def get_cache_size_in_kb(endpoint, port):
     for key in keys:
         total_used += int(stats["nodes"][key]["graph_memory_usage"])
     return total_used
-

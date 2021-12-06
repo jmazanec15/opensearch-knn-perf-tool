@@ -19,7 +19,7 @@
 from okpt.io.config.parsers.base import ConfigurationError
 from okpt.test.steps.base import Step, StepConfig
 
-from okpt.test.steps.opensearch import CreateIndexStep, DisableRefreshStep, BulkStep, RefreshIndexStep, \
+from okpt.test.steps.steps import CreateIndexStep, DisableRefreshStep, BulkStep, RefreshIndexStep, \
     DeleteIndexStep, TrainModelStep, QueryIndexStep, BulkIndexStep, BatchQueryIndex, DeleteModelStep, QueryRecallStep, \
     ForceMergeStep
 

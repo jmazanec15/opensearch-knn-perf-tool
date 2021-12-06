@@ -54,7 +54,9 @@ class TestParser(base.BaseParser):
         """See base class."""
         config_obj = super().parse(file_obj)
 
-        implicit_step_config = {'endpoint': config_obj['endpoint']}
+        implicit_step_config = dict()
+        if 'endpoint' in config_obj:
+            implicit_step_config['endpoint'] = config_obj['endpoint']
 
         # Each step should have its own parse - take the config object and check if its valid
         setup = []

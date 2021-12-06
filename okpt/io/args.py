@@ -16,7 +16,7 @@
 # under the License.
 """Parses and defines command line arguments for the program.
 
-Defines the subcommands `test`, `plot`, and `diff` and the corresponding
+Defines the subcommands `test` and `diff` and the corresponding
 files that are required by each command.
 
 Functions:
