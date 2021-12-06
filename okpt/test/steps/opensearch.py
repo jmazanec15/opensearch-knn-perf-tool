@@ -21,10 +21,10 @@ so the profiling decorators aren't needed for some functions.
 """
 from typing import Any, Dict, List, cast
 
-import elasticsearch
 import h5py
 import numpy as np
 
+from opensearchpy import OpenSearch, RequestsHttpConnection
 from okpt.test.steps import base
 
 
@@ -34,9 +34,9 @@ class CreateIndexStep(base.Step):
     label = 'create_index'
     measures = ['took']
 
-    def __init__(self, es: elasticsearch.Elasticsearch, index_name: str,
+    def __init__(self, opensearch: OpenSearch, index_name: str,
                  index_spec: Dict[str, Any]):
-        self.es = es
+        self.opensearch = opensearch
         self.index_name = index_name
         self.index_spec = index_spec
 
@@ -46,8 +46,8 @@ class CreateIndexStep(base.Step):
         Returns:
             An OpenSearch index creation response body.
         """
-        return self.es.indices.create(index=self.index_name,
-                                      body=self.index_spec)
+        return self.opensearch.indices.create(index=self.index_name,
+                                      body=self.index_spec
 
 
 class DisableRefreshStep(base.Step):
@@ -56,8 +56,8 @@ class DisableRefreshStep(base.Step):
     label = 'disable_refresh'
     measures = ['took']
 
-    def __init__(self, es: elasticsearch.Elasticsearch):
-        self.es = es
+    def __init__(self, opensearch: OpenSearch):
+        self.opensearch = opensearch
 
     def _action(self):
         """Disables the refresh interval for an OpenSearch index.
@@ -65,7 +65,7 @@ class DisableRefreshStep(base.Step):
         Returns:
             An OpenSearch index settings update response body.
         """
-        return self.es.indices.put_settings(
+        return self.opensearch.indices.put_settings(
             body={'index': {
                 'refresh_interval': -1
             }})
@@ -77,8 +77,8 @@ class BulkStep(base.Step):
     label = 'bulk_add'
     measures = ['took']
 
-    def __init__(self, es: elasticsearch.Elasticsearch, index_name: str, body):
-        self.es = es
+    def __init__(self, opensearch: OpenSearch, index_name: str, body):
+        self.opensearch = opensearch
         self.index_name = index_name
         self.body = body
 
@@ -88,22 +88,19 @@ class BulkStep(base.Step):
         Returns:
             An OpenSearch bulk response body.
         """
-        return self.es.bulk(index=self.index_name, body=self.body)
-
+        return self.opensearch.bulk(index=self.index_name, body=self.body)
 
 class RefreshIndexStep(base.Step):
     """See base class."""
 
     label = 'refresh_index'
     measures = ['took']
-
-    def __init__(self, es: elasticsearch.Elasticsearch, index_name: str):
-        self.es = es
+    def __init__(self, opensearch: OpenSearch, index_name: str):
+        self.opensearch = opensearch
         self.index_name = index_name
 
     def _action(self):
-        return self.es.indices.refresh(index=self.index_name)
-
+        return self.opensearch.indices.refresh(index=self.index_name)
 
 class QueryIndexStep(base.Step):
     """See base class."""
@@ -111,9 +108,9 @@ class QueryIndexStep(base.Step):
     label = 'query_index'
     measures = ['took']
 
-    def __init__(self, es: elasticsearch.Elasticsearch, index_name: str,
+    def __init__(self, opensearch: OpenSearch, index_name: str,
                  body: Dict[str, Any]):
-        self.es = es
+        self.opensearch = opensearch
         self.index_name = index_name
         self.body = body
 
@@ -123,7 +120,7 @@ class QueryIndexStep(base.Step):
         Returns:
             An OpenSearch query response body.
         """
-        return self.es.search(index=self.index_name, body=self.body)
+        return self.opensearch.search(index=self.index_name, body=self.body)
 
 
 def bulk_transform(partition: np.ndarray,
@@ -140,11 +137,11 @@ def bulk_transform(partition: np.ndarray,
     return actions
 
 
-def bulk_index(es: elasticsearch.Elasticsearch, index_name: str,
+def bulk_index(opensearch: OpenSearch, index_name: str,
                dataset: h5py.Dataset, bulk_size: int):
-    """Bulk indexes vectors into an Elasticsearch index.
+    """Bulk indexes vectors into an OpenSearch index.
     Args:
-        es: An OpenSearch client.
+        opensearch: An OpenSearch client.
         index_name: Name of the OpenSearch index to ingest vectors into.
         dataset: Dataset of vectors to bulk ingest.
         bulk_size: Number of vectors in one bulk request.
@@ -157,23 +154,22 @@ def bulk_index(es: elasticsearch.Elasticsearch, index_name: str,
     while i < dataset.len():
         partition = cast(np.ndarray, dataset[i:i + bulk_size])
         body = bulk_transform(partition, action)
-        result = BulkStep(es=es, index_name=index_name, body=body).execute()
+        result = BulkStep(opensearch=opensearch, index_name=index_name, body=body).execute()
         results.append(result)
         i += bulk_size
 
     return results
 
 
-def batch_query_index(es: elasticsearch.Elasticsearch, index_name: str,
+def batch_query_index(opensearch: OpenSearch, index_name: str,
                       dataset: h5py.Dataset, k: int) -> List[Dict[str, Any]]:
     """Queries an array of vectors against an OpenSearch index.
 
     Args:
-        es: An OpenSearch client.
+        opensearch: An OpenSearch client.
         index_name: Name of the OpenSearch index to be searched against.
         dataset: Array of vectors to query.
         k: Number of neighbors to search for.
-
     Returns:
         A list of `query_index` responses.
     """
@@ -189,19 +185,19 @@ def batch_query_index(es: elasticsearch.Elasticsearch, index_name: str,
         }
     }
     return [
-        QueryIndexStep(es=es, index_name=index_name,
+        QueryIndexStep(opensearch=opensearch, index_name=index_name,
                        body=get_body(v, k)).execute() for v in dataset
     ]
 
 
-def delete_index(es: elasticsearch.Elasticsearch, index_name: str):
+def delete_index(opensearch: OpenSearch, index_name: str):
     """Deletes an OpenSearch index.
 
     Args:
-        es: An OpenSearch client.
+        opensearch: An OpenSearch client.
         index_name: Name of the OpenSearch index to be deleted.
 
     Returns:
         An OpenSearch index deletion response body.
     """
-    es.indices.delete(index=index_name)
+    opensearch.indices.delete(index=index_name)

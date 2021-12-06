@@ -1,5 +1,5 @@
 Cerberus
-elasticsearch
+opensearch-py
 nmslib
 PyYAML
 numpy
