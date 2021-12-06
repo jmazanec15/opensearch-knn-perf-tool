@@ -68,7 +68,7 @@ def _pxx(values: List[Any], p: float):
         return float(values[floor(len(values) * p)])
 
 
-def _aggregate_steps(step_results: List[Dict[str, Any]]):
+def _aggregate_steps(step_results: List[Dict[str, Any]], measure_labels=['took', 'recall@1', 'recall@K', 'store_kb', "memory_kb"]):
     """Aggregates the steps for a given Test.
 
     The aggregation process extracts the measures from each step and calculates
@@ -95,8 +95,6 @@ def _aggregate_steps(step_results: List[Dict[str, Any]]):
     Returns:
         A complete test result.
     """
-    #, measure_labels=['took', 'recall@1', 'recall@K', 'store_kb', "memory_kb"]
-    #TODO: I think we should refactor this a little bit.
     test_measures = {
         f'test_{measure_label}': 0
         for measure_label in measure_labels
