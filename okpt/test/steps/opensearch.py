@@ -22,12 +22,11 @@ so the profiling decorators aren't needed for some functions.
 import json
 from typing import Any, Dict, List, cast
 
-import elasticsearch
 import numpy as np
 import requests
 import time
 
-from elasticsearch import Elasticsearch, RequestsHttpConnection
+from opensearchpy import OpenSearch, RequestsHttpConnection
 
 from okpt.io.config.parsers.base import ConfigurationError
 from okpt.io.config.parsers.util import parse_string_param, parse_int_param, parse_dict_param, parse_dataset, \
@@ -45,7 +44,7 @@ class OpenSearchStep(base.Step):
         self.endpoint = parse_string_param("endpoint", step_config.config, step_config.implicit_config, "localhost")
         default_port = 9200 if self.endpoint == "localhost" else 80
         self.port = parse_int_param("port", step_config.config, step_config.implicit_config, default_port)
-        self.es = get_opensearch_endpoint(str(self.endpoint), int(self.port))
+        self.opensearch = get_opensearch_endpoint(str(self.endpoint), int(self.port))
 
 
 class CreateIndexStep(OpenSearchStep):
@@ -68,7 +67,7 @@ class CreateIndexStep(OpenSearchStep):
         Returns:
             An OpenSearch index creation response body.
         """
-        return self.es.indices.create(index=self.index_name,
+        return self.opensearch.indices.create(index=self.index_name,
                                       body=self.body)
 
 
@@ -87,7 +86,7 @@ class DisableRefreshStep(OpenSearchStep):
         Returns:
             An OpenSearch index settings update response body.
         """
-        return self.es.indices.put_settings(
+        return self.opensearch.indices.put_settings(
             body={'index': {
                 'refresh_interval': -1
             }})
@@ -110,7 +109,7 @@ class BulkStep(OpenSearchStep):
         Returns:
             An OpenSearch bulk response body.
         """
-        return self.es.bulk(index=self.index_name, body=self.body, timeout="5m")
+        return self.opensearch.bulk(index=self.index_name, body=self.body, timeout="5m")
 
 
 class RefreshIndexStep(OpenSearchStep):
@@ -126,7 +125,7 @@ class RefreshIndexStep(OpenSearchStep):
     def _action(self):
         while True:
             try:
-                self.es.indices.refresh(index=self.index_name)
+                self.opensearch.indices.refresh(index=self.index_name)
                 return dict()
             except:
                 pass
@@ -146,7 +145,7 @@ class ForceMergeStep(OpenSearchStep):
     def _action(self):
         while True:
             try:
-                self.es.indices.forcemerge(index=self.index_name, max_num_segments=self.max_num_segments)
+                self.opensearch.indices.forcemerge(index=self.index_name, max_num_segments=self.max_num_segments)
                 return dict()
             except:
                 pass
@@ -170,7 +169,7 @@ class QueryIndexStep(OpenSearchStep):
         Returns:
             An OpenSearch query response body.
         """
-        return self.es.search(index=self.index_name, body=self.body)
+        return self.opensearch.search(index=self.index_name, body=self.body)
 
 
 class TrainModelStep(OpenSearchStep):
@@ -262,7 +261,7 @@ class DeleteIndexStep(OpenSearchStep):
         Returns:
             An empty dict
         """
-        delete_index(self.es, self.index_name)
+        delete_index(self.opensearch, self.index_name)
 
 
 class BulkIndexStep(OpenSearchStep):
@@ -294,7 +293,7 @@ class BulkIndexStep(OpenSearchStep):
             i += self.bulk_size
 
         # TODO: Clean this up
-        size_in_kb = get_index_size_in_kb(self.es, self.index_name)
+        size_in_kb = get_index_size_in_kb(self.opensearch, self.index_name)
         for i in range(len(results)):
             results[i]["store_kb"] = size_in_kb
 
@@ -413,20 +412,21 @@ def bulk_transform(partition: np.ndarray, field_name: str, action, offset: int) 
     return actions
 
 
-def delete_index(es: elasticsearch.Elasticsearch, index_name: str):
+def delete_index(opensearch: OpenSearch, index_name: str):
     """Deletes an OpenSearch index.
 
     Args:
-        es: An OpenSearch client.
+        opensearch: An OpenSearch client.
         index_name: Name of the OpenSearch index to be deleted.
 
     Returns:
         An OpenSearch index deletion response body.
     """
-    es.indices.delete(index=index_name, ignore=[400, 404])
+    opensearch.indices.delete(index=index_name, ignore=[400, 404])
 
 
 def get_model(endpoint, port, model_id):
+    # TODO: Major cleanup
     response = requests.get(
         "http://" + endpoint + ":" + str(port) + "/_plugins/_knn/models/" + model_id,
         headers={"content-type": "application/json"})
@@ -434,6 +434,7 @@ def get_model(endpoint, port, model_id):
 
 
 def delete_model(endpoint, port, model_id):
+    # TODO: Major cleanup
     response = requests.delete(
         "http://" + endpoint + ":" + str(port) + "/_plugins/_knn/models/" + model_id,
         headers={"content-type": "application/json"})
@@ -442,7 +443,7 @@ def delete_model(endpoint, port, model_id):
 
 def get_opensearch_endpoint(endpoint: str, port: int):
     # TODO: fix for security in the future
-    return Elasticsearch(
+    return OpenSearch(
         hosts=[{
             'host': endpoint,
             'port': port
@@ -465,9 +466,9 @@ def recall_at_r(results, ground_truth_set, r, k):
     return correct / (r * len(ground_truth_set))
 
 
-def get_index_size_in_kb(es, index_name):
+def get_index_size_in_kb(opensearch, index_name):
     #TODO: Clean this up
-    return int(es.indices.stats(index_name, metric="store")["indices"][index_name]["total"]["store"]["size_in_bytes"]) / 1024
+    return int(opensearch.indices.stats(index_name, metric="store")["indices"][index_name]["total"]["store"]["size_in_bytes"]) / 1024
 
 
 def get_cache_size_in_kb(endpoint, port):
