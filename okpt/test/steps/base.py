@@ -34,20 +34,22 @@ class Step:
 
     Attributes:
         label: Name of the step.
-        measures: Metrics that the step should profile. The available measures are in the `profile` module.
 
     Methods:
         execute: Run the step and return a step response with the label and corresponding measures.
     """
 
     label = 'base_step'
-    measures: List[str] = []
 
     def __init__(self, step_config: StepConfig):
         self.step_config = step_config
 
     def _action(self):
         """Step logic/behavior to be executed and profiled."""
+        pass
+
+    def _get_measures(self) -> List[str]:
+        """Gets the measures for a particular test"""
         pass
 
     def execute(self) -> List[Dict[str, Any]]:
@@ -57,13 +59,12 @@ class Step:
             Dict containing step label and various step measures.
         """
         action = self._action
-        # profile the action with measure decorators
-        for measure in self.measures:
-            action = getattr(profile, measure)(action)
+
+        # profile the action with measure decorators - add if necessary
+        action = getattr(profile, "took")(action)
 
         result = action()
-        if isinstance(result, list):
-            return result
         if isinstance(result, dict):
             return [{'label': self.label, **result}]
-        return [{'label': self.label}]
+
+        raise ValueError("Invalid return by a step")

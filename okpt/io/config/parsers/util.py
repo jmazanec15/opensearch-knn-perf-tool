@@ -78,6 +78,24 @@ def parse_int_param(key: str, first_map, second_map, default) -> int:
     return default
 
 
+def parse_bool_param(key: str, first_map, second_map, default) -> bool:
+    value = first_map.get(key)
+    if value is not None:
+        if type(value) is bool:
+            return value
+        raise ConfigurationError("Invalid type for {}".format(key))
+
+    value = second_map.get(key)
+    if value is not None:
+        if type(value) is bool:
+            return value
+        raise ConfigurationError("Invalid type for {}".format(key))
+
+    if default is None:
+        raise ConfigurationError("{} must be set".format(key))
+    return default
+
+
 def parse_dict_param(key: str, first_map, second_map, default) -> dict:
     value = first_map.get(key)
     if value is not None:
@@ -96,7 +114,7 @@ def parse_dict_param(key: str, first_map, second_map, default) -> dict:
     return default
 
 
-def parse_list_param(key: str, first_map, second_map, default) -> dict:
+def parse_list_param(key: str, first_map, second_map, default) -> list:
     value = first_map.get(key)
     if value is not None:
         if type(value) is list:
@@ -112,4 +130,3 @@ def parse_list_param(key: str, first_map, second_map, default) -> dict:
     if default is None:
         raise ConfigurationError("{} must be set".format(key))
     return default
-

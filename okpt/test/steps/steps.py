@@ -29,8 +29,7 @@ import time
 from opensearchpy import OpenSearch, RequestsHttpConnection
 
 from okpt.io.config.parsers.base import ConfigurationError
-from okpt.io.config.parsers.util import parse_string_param, parse_int_param, parse_dict_param, parse_dataset, \
-    parse_list_param
+from okpt.io.config.parsers.util import parse_string_param, parse_int_param, parse_dataset, parse_bool_param
 from okpt.io.utils.reader import parse_json_from_path
 from okpt.test.steps import base
 from okpt.test.steps.base import StepConfig
@@ -51,7 +50,6 @@ class CreateIndexStep(OpenSearchStep):
     """See base class."""
 
     label = 'create_index'
-    measures = ['took']
 
     def __init__(self, step_config: StepConfig):
         super().__init__(step_config)
@@ -69,12 +67,14 @@ class CreateIndexStep(OpenSearchStep):
         """
         return self.opensearch.indices.create(index=self.index_name, body=self.body)
 
+    def _get_measures(self) -> List[str]:
+        return ['took']
+
 
 class DisableRefreshStep(OpenSearchStep):
     """See base class."""
 
     label = 'disable_refresh'
-    measures = ['took']
 
     def __init__(self, step_config: StepConfig):
         super().__init__(step_config)
@@ -90,32 +90,14 @@ class DisableRefreshStep(OpenSearchStep):
                 'refresh_interval': -1
             }})
 
-
-class BulkStep(OpenSearchStep):
-    """See base class."""
-
-    label = 'bulk_add'
-    measures = ['took']
-
-    def __init__(self, step_config: StepConfig):
-        super().__init__(step_config)
-        self.index_name = parse_string_param("index_name", step_config.config, {}, None)
-        self.body = parse_list_param("body", step_config.config, {}, None)
-
-    def _action(self):
-        """Make bulk request to OpenSearch.
-
-        Returns:
-            An OpenSearch bulk response body.
-        """
-        return self.opensearch.bulk(index=self.index_name, body=self.body, timeout="5m")
+    def _get_measures(self) -> List[str]:
+        return ['took']
 
 
 class RefreshIndexStep(OpenSearchStep):
     """See base class."""
 
     label = 'refresh_index'
-    measures = ['took']
 
     def __init__(self, step_config: StepConfig):
         super().__init__(step_config)
@@ -129,12 +111,14 @@ class RefreshIndexStep(OpenSearchStep):
             except:
                 pass
 
+    def _get_measures(self) -> List[str]:
+        return ['took']
+
 
 class ForceMergeStep(OpenSearchStep):
     """See base class."""
 
     label = 'force_merge'
-    measures = ['took']
 
     def __init__(self, step_config: StepConfig):
         super().__init__(step_config)
@@ -149,31 +133,12 @@ class ForceMergeStep(OpenSearchStep):
             except:
                 pass
 
-
-class QueryIndexStep(OpenSearchStep):
-    """See base class."""
-
-    label = 'query_index'
-    measures = ['took']
-
-    def __init__(self, step_config: StepConfig):
-        super().__init__(step_config)
-
-        self.index_name = parse_string_param("index_name", step_config.config, {}, None)
-        self.body = parse_dict_param("body", step_config.config, {}, None)
-
-    def _action(self):
-        """Queries a vector against an OpenSearch index.
-
-        Returns:
-            An OpenSearch query response body.
-        """
-        return self.opensearch.search(index=self.index_name, body=self.body)
+    def _get_measures(self) -> List[str]:
+        return ['took']
 
 
 class TrainModelStep(OpenSearchStep):
     label = 'train_model'
-    measures = ['took']
 
     def __init__(self, step_config: StepConfig):
         super().__init__(step_config)
@@ -226,10 +191,12 @@ class TrainModelStep(OpenSearchStep):
 
         raise TimeoutError("Failed to create model")
 
+    def _get_measures(self) -> List[str]:
+        return ['took']
+
 
 class DeleteModelStep(OpenSearchStep):
     label = 'delete_model'
-    measures = ['took']
 
     def __init__(self, step_config: StepConfig):
         super().__init__(step_config)
@@ -244,10 +211,12 @@ class DeleteModelStep(OpenSearchStep):
         """
         delete_model(self.endpoint, self.port, self.model_id)
 
+    def _get_measures(self) -> List[str]:
+        return ['took']
+
 
 class DeleteIndexStep(OpenSearchStep):
     label = 'delete_index'
-    measures = ['took']
 
     def __init__(self, step_config: StepConfig):
         super().__init__(step_config)
@@ -262,10 +231,13 @@ class DeleteIndexStep(OpenSearchStep):
         """
         delete_index(self.opensearch, self.index_name)
 
+    def _get_measures(self) -> List[str]:
+        return ['took']
 
-class BulkIndexStep(OpenSearchStep):
 
-    label = BulkStep.label
+class IngestStep(OpenSearchStep):
+
+    label = 'ingest'
 
     def __init__(self, step_config: StepConfig):
         super().__init__(step_config)
@@ -278,36 +250,38 @@ class BulkIndexStep(OpenSearchStep):
         self.dataset = parse_dataset(dataset_path, dataset_format)
 
     def _action(self):
-        results = []
+        results = dict()
         def action(doc_id): return {'index': {'_index': self.index_name, "_id": doc_id}}
 
         i = 0
+        index_responses = list()
         while i < self.dataset.train.len():
             partition = cast(np.ndarray, self.dataset.train[i:i + self.bulk_size])
             body = bulk_transform(partition, self.field_name, action, i)
-            bulk_step_config = StepConfig("bulk_add", {"index_name": self.index_name, "body": body},
-                                          self.implicit_config)
-            result = BulkStep(bulk_step_config).execute()
-            results.extend(result)
+            result = bulk_index(self.opensearch, self.index_name, {"index_name": self.index_name, "body": body})
+            index_responses.append(result)
             i += self.bulk_size
 
-        # TODO: Clean this up
-        size_in_kb = get_index_size_in_kb(self.opensearch, self.index_name)
-        for i in range(len(results)):
-            results[i]["store_kb"] = size_in_kb
+        results["took"] = [float(index_response["took"]) for index_response in index_responses]
+        results["store_kb"] = get_index_size_in_kb(self.opensearch, self.index_name)
 
         return results
 
+    def _get_measures(self) -> List[str]:
+        return ['took', 'store_kb']
 
-class BatchQueryIndex(OpenSearchStep):
 
-    label = QueryIndexStep.label
+class QueryIndex(OpenSearchStep):
+
+    label = 'query'
 
     def __init__(self, step_config: StepConfig):
         super().__init__(step_config)
         self.k = parse_int_param("k", step_config.config, {}, 100)
+        self.r = parse_int_param("r", step_config.config, {}, 1)
         self.index_name = parse_string_param("index_name", step_config.config, {}, None)
         self.field_name = parse_string_param("field_name", step_config.config, {}, None)
+        self.calculate_recall = parse_bool_param("calculate_recall", step_config.config, {}, False)
         dataset_format = parse_string_param("dataset_format", step_config.config, {}, "hdf5")
         dataset_path = parse_string_param("dataset_path", step_config.config, {}, None)
         self.dataset = parse_dataset(dataset_path, dataset_format)
@@ -326,72 +300,32 @@ class BatchQueryIndex(OpenSearchStep):
             }
         }
 
-        results = list()
+        results = dict()
+        query_responses = list()
         for v in self.dataset.test:
-            query_test_config = StepConfig(
-                "query_index",
-                {
+            query_body = {
                     "index_name": self.index_name,
                     "body": get_body(v),
-                },
-                self.implicit_config
-            )
-            results.extend(QueryIndexStep(query_test_config).execute())
+            }
+            query_responses.append(query_index(self.opensearch, self.index_name, query_body, [self.field_name]))
 
-        # TODO: Clean this up
-        size_in_kb = get_cache_size_in_kb(self.endpoint, 80)
-        for i in range(len(results)):
-            results[i]["memory_kb"] = size_in_kb
+        results["took"] = [float(query_response["took"]) for query_response in query_responses]
+        results["memory_kb"] = get_cache_size_in_kb(self.endpoint, 80)
+
+        if self.calculate_recall:
+            ids = [int(query_response["_id"]) for query_response in query_responses]
+            results["recall@K"] = recall_at_r(ids,  self.dataset.neighbors, self.k, self.k)
+            results[f'recall@{str(self.r)}'] = recall_at_r(ids,  self.dataset.neighbors, self.r, self.k)
 
         return results
 
+    def _get_measures(self) -> List[str]:
+        measures = ['took', 'memory_kb']
 
-class QueryRecallStep(OpenSearchStep):
+        if self.calculate_recall:
+            measures.extend(['recall@K', f'recall@{str(self.r)}'])
 
-    label = "batch_query_recall"
-
-    def __init__(self, step_config: StepConfig):
-        super().__init__(step_config)
-        self.k = parse_int_param("k", step_config.config, {}, 100)
-        self.index_name = parse_string_param("index_name", step_config.config, {}, None)
-        self.field_name = parse_string_param("field_name", step_config.config, {}, None)
-        dataset_format = parse_string_param("dataset_format", step_config.config, {}, "hdf5")
-        dataset_path = parse_string_param("dataset_path", step_config.config, {}, None)
-        self.dataset = parse_dataset(dataset_path, dataset_format)
-        self.implicit_config = step_config.implicit_config
-
-    def _action(self):
-        def get_body(vec): return {
-            'size': self.k,
-            'query': {
-                'knn': {
-                    self.field_name: {
-                        'vector': vec,
-                        'k': self.k
-                    }
-                }
-            }
-        }
-
-        results = list()
-        for v in self.dataset.test:
-            query_test_config = StepConfig(
-                "query_index",
-                {
-                    "index_name": self.index_name,
-                    "body": get_body(v),
-                },
-                self.implicit_config
-            )
-
-            results.append([int(result["_id"]) for result in QueryIndexStep(query_test_config).execute()[0]["hits"]["hits"]])
-
-        recall_at_1 = recall_at_r(results, self.dataset.neighbors, 1, self.k)
-        recall_at_k = recall_at_r(results, self.dataset.neighbors, self.k, self.k)
-        return {
-            "recall@1": recall_at_1,
-            "recall@K": recall_at_k
-        }
+        return measures
 
 
 # Helper functions - (AKA not steps)
@@ -531,3 +465,11 @@ def get_cache_size_in_kb(endpoint, port):
     for key in keys:
         total_used += int(stats["nodes"][key]["graph_memory_usage"])
     return total_used
+
+
+def query_index(opensearch: OpenSearch, index_name: str, body: dict, excluded_fields: list):
+    return opensearch.search(index=index_name, body=body, _source_excludes=excluded_fields)
+
+
+def bulk_index(opensearch: OpenSearch, index_name: str, body: dict):
+    return opensearch.bulk(index=index_name, body=body, timeout="5m")
