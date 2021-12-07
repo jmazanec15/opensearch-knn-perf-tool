@@ -258,7 +258,7 @@ class IngestStep(OpenSearchStep):
         while i < self.dataset.train.len():
             partition = cast(np.ndarray, self.dataset.train[i:i + self.bulk_size])
             body = bulk_transform(partition, self.field_name, action, i)
-            result = bulk_index(self.opensearch, self.index_name, {"index_name": self.index_name, "body": body})
+            result = bulk_index(self.opensearch, self.index_name, body)
             index_responses.append(result)
             i += self.bulk_size
 
