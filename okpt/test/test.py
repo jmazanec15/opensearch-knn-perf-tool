@@ -111,14 +111,14 @@ def _aggregate_steps(step_results: List[Dict[str, Any]], measure_labels=['took']
         # Step measure labels should contain all of the measures
 
         # iterate over all measures in each test step
-        for step_measure_label in step_measure_labels:
+        for measure_label in step_measure_labels:
 
             step_measure = step[step_measure_label]
-            step_measure_label = f'{step_label}_{step_measure_label}'
+            step_measure_label = f'{step_label}_{measure_label}'
 
             # Add cumulative test measures from steps to test measures
-            if step_measure_label in measure_labels:
-                test_measures[f'test_{step_measure_label}'] += sum(step_measure) if isinstance(step_measure, list) \
+            if measure_label in measure_labels:
+                test_measures[f'test_{measure_label}'] += sum(step_measure) if isinstance(step_measure, list) \
                     else step_measure
 
             if step_measure_label in step_measures:

@@ -65,7 +65,8 @@ class CreateIndexStep(OpenSearchStep):
         Returns:
             An OpenSearch index creation response body.
         """
-        return self.opensearch.indices.create(index=self.index_name, body=self.body)
+        self.opensearch.indices.create(index=self.index_name, body=self.body)
+        return dict()
 
     def _get_measures(self) -> List[str]:
         return ['took']
@@ -85,10 +86,12 @@ class DisableRefreshStep(OpenSearchStep):
         Returns:
             An OpenSearch index settings update response body.
         """
-        return self.opensearch.indices.put_settings(
+        self.opensearch.indices.put_settings(
             body={'index': {
                 'refresh_interval': -1
             }})
+
+        return dict()
 
     def _get_measures(self) -> List[str]:
         return ['took']
@@ -210,6 +213,7 @@ class DeleteModelStep(OpenSearchStep):
             The trained model
         """
         delete_model(self.endpoint, self.port, self.model_id)
+        return dict()
 
     def _get_measures(self) -> List[str]:
         return ['took']
@@ -230,6 +234,7 @@ class DeleteIndexStep(OpenSearchStep):
             An empty dict
         """
         delete_index(self.opensearch, self.index_name)
+        return dict()
 
     def _get_measures(self) -> List[str]:
         return ['took']
@@ -303,17 +308,13 @@ class QueryStep(OpenSearchStep):
         results = dict()
         query_responses = list()
         for v in self.dataset.test:
-            query_body = {
-                    "index_name": self.index_name,
-                    "body": get_body(v),
-            }
-            query_responses.append(query_index(self.opensearch, self.index_name, query_body, [self.field_name]))
+            query_responses.append(query_index(self.opensearch, self.index_name, get_body(v), [self.field_name]))
 
         results["took"] = [float(query_response["took"]) for query_response in query_responses]
         results["memory_kb"] = get_cache_size_in_kb(self.endpoint, 80)
 
         if self.calculate_recall:
-            ids = [int(query_response["_id"]) for query_response in query_responses]
+            ids = [[int(hit["_id"]) for hit in query_response["hits"]["hits"]] for query_response in query_responses]
             results["recall@K"] = recall_at_r(ids,  self.dataset.neighbors, self.k, self.k)
             results[f'recall@{str(self.r)}'] = recall_at_r(ids,  self.dataset.neighbors, self.r, self.k)
 
