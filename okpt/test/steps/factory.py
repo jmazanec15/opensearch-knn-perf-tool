@@ -19,9 +19,8 @@
 from okpt.io.config.parsers.base import ConfigurationError
 from okpt.test.steps.base import Step, StepConfig
 
-from okpt.test.steps.steps import CreateIndexStep, DisableRefreshStep, BulkStep, RefreshIndexStep, \
-    DeleteIndexStep, TrainModelStep, QueryIndexStep, BulkIndexStep, BatchQueryIndex, DeleteModelStep, QueryRecallStep, \
-    ForceMergeStep
+from okpt.test.steps.steps import CreateIndexStep, DisableRefreshStep, RefreshIndexStep, DeleteIndexStep, \
+    TrainModelStep, DeleteModelStep, ForceMergeStep, IngestStep, QueryStep
 
 
 def create_step(step_config: StepConfig) -> Step:
@@ -29,24 +28,18 @@ def create_step(step_config: StepConfig) -> Step:
         return CreateIndexStep(step_config)
     elif step_config.step_name == DisableRefreshStep.label:
         return DisableRefreshStep(step_config)
-    elif step_config.step_name == BulkStep.label:
-        return BulkStep(step_config)
     elif step_config.step_name == RefreshIndexStep.label:
         return RefreshIndexStep(step_config)
-    elif step_config.step_name == QueryIndexStep.label:
-        return QueryIndexStep(step_config)
     elif step_config.step_name == TrainModelStep.label:
         return TrainModelStep(step_config)
     elif step_config.step_name == DeleteModelStep.label:
         return DeleteModelStep(step_config)
     elif step_config.step_name == DeleteIndexStep.label:
         return DeleteIndexStep(step_config)
-    elif step_config.step_name == "bulk_index":
-        return BulkIndexStep(step_config)
-    elif step_config.step_name == "batch_query":
-        return BatchQueryIndex(step_config)
-    elif step_config.step_name == QueryRecallStep.label:
-        return QueryRecallStep(step_config)
+    elif step_config.step_name == IngestStep.label:
+        return IngestStep(step_config)
+    elif step_config.step_name == QueryStep.label:
+        return QueryStep(step_config)
     elif step_config.step_name == ForceMergeStep.label:
         return ForceMergeStep(step_config)
 

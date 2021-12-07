@@ -271,7 +271,7 @@ class IngestStep(OpenSearchStep):
         return ['took', 'store_kb']
 
 
-class QueryIndex(OpenSearchStep):
+class QueryStep(OpenSearchStep):
 
     label = 'query'
 
